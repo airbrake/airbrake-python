@@ -1,9 +1,8 @@
 from setuptools import setup, find_packages
 
 dependencies = [
-    'requests'
+    'requests>=2.2.1'
 ]
-
 
 setup(
     name='airbrake',
@@ -14,7 +13,6 @@ setup(
     author_email="bk@theboxes.org",
     install_requires=dependencies,
     packages=find_packages(exclude=['tests']),
-    namespace_packages=['airbrake'],
     classifiers=["Programming Language :: Python"],
     license='Apache License (2.0)'
 )
