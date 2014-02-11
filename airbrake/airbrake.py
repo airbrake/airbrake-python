@@ -71,6 +71,7 @@ class Airbrake(object):
         self._api_url = None
         self._env_context = None
         self._calling_module = None
+        self.deploy_url = "http://api.airbrake.io/deploys.txt"
 
         if notifier is None:
             notifier = {'name': self.calling_module,
@@ -182,6 +183,19 @@ class Airbrake(object):
                                  headers=headers, params=api_key)
         response.raise_for_status()
         self.errors = []
+
+    def deploy(self, env=None):
+
+        if env:
+            environment = env
+        else:
+            environment = self.environment
+
+        params = {'api_key': self.api_key,
+                  'deploy[rails_env]': str(environment)}
+
+        response = requests.post(self.deploy_url, params=params)
+        response.raise_for_status()
         return response.status_code
 
     class Error(object):
