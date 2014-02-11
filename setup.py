@@ -1,10 +1,8 @@
-import ez_setup
-ez_setup.use_setuptools()
-
 from setuptools import setup, find_packages
 
-DEPENDENCYLINKS = []
-REQUIRES = []
+dependencies = [
+    'requests'
+]
 
 
 setup(
@@ -14,9 +12,9 @@ setup(
     version="1.0.0",
     author="BK Box",
     author_email="bk@theboxes.org",
-    dependency_links=DEPENDENCYLINKS,
-    install_requires=REQUIRES,
-    packages=find_packages(exclude=['bin', 'ez_setup']),
+    install_requires=dependencies,
+    packages=find_packages(exclude=['tests']),
     namespace_packages=['airbrake'],
-    license='Apache License (2.0)',
+    classifiers=["Programming Language :: Python"],
+    license='Apache License (2.0)'
 )
