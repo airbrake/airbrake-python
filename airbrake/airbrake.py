@@ -4,7 +4,6 @@ from __future__ import print_function
 import inspect
 import json
 import logging
-import os
 import platform
 import sys
 import traceback
@@ -207,7 +206,7 @@ class Airbrake(object):
             """Format backtrace dict and append to the array of errors
             managed by the Airbrake instance."""
             for filename, line, func, _ in traceback.extract_tb(self.trace):
-                line = {'file': os.path.abspath(filename),
+                line = {'file': filename,
                         'line': line,
                         'function': func}
                 self.__error__['backtrace'].append(line)
