@@ -1,6 +1,4 @@
 """Airbrake object to handle airbrake.io reporting."""
-from __future__ import print_function
-
 import inspect
 import json
 import logging
@@ -140,25 +138,33 @@ class Airbrake(object):
             self._calling_module = inspect.stack()[2][1]
         return self._calling_module
 
-    def log(self, exc, params=None):
+    def log(self, exc=None, record=None, params=None):
         """Acknowledge an error, prepare it to be shipped to Airbrake,
         and append to Airbrake.errors. If Airbrake.auto_notify=True, the error
         will also be shipped to Airbrake immediately; otherwise, all
         logged errors will be shipped on the next call to Airbrake.notify().
 
         :param exc:    Exception instance to log.
+        :param record: Log record.
         :param params: Payload field "params" which only has one definition
                        per call to notify(). It is definable here only for
                        convenience, assuming log() is the primary function
                        used in this module.
         """
-        if params and not isinstance(params, dict):
-            LOG.warning("Unable to set `params`. "
-                        "Payload 'params' should be a dictionary.")
-        else:
-            self.payload['params'] = params
-        error = Airbrake.Error(self, exc)
-        if self.auto_notify:
+        if params:
+            if not isinstance(params, dict):
+                LOG.warning("Unable to set `params`. "
+                            "Payload 'params' should be a dictionary.")
+            else:
+                self.payload['params'] = params
+
+        if exc:
+            error = Airbrake.Error(self, exc=exc)
+
+        if record:
+            error = Airbrake.Error(self, record=record)
+
+        if self.auto_notify == True:
             self.notify()
         return error
 
@@ -176,13 +182,14 @@ class Airbrake(object):
         api_key = {'key': self.api_key}
 
         if not self.errors:
-            LOG.warning("No errors to ship. Maybe your code isn't so bad.")
-            return
+            msg = "No errors to ship. Maybe your code isn't so bad."
+            LOG.warning(msg)
 
         response = requests.post(self.api_url, data=json.dumps(self.payload),
                                  headers=headers, params=api_key)
         response.raise_for_status()
-        self.errors = []
+        del self.errors[:]
+        return response.status_code
 
     def deploy(self, env=None):
 
@@ -207,14 +214,45 @@ class Airbrake(object):
             http://help.airbrake.io/kb/api-2/notifier-api-v3
         """
 
-        def __init__(self, manager, exc):
+        def __init__(self, manager, exc=None, record=None):
 
             self.manager = manager
-            self.trace = sys.exc_info()[2]
-            self.__error__ = {'type': exc.__class__.__name__,
-                              'message': getattr(exc, 'message', str(exc))}
-            self._format_backtrace()
-            del self.trace
+
+            #default (to be overwritten)
+            self.__error__ = {'type': "N/A",
+                              'backtrace': [{'file': "N/A",
+                                             'line': 1,
+                                             'function': "N/A"}],
+                              'message': "N/A"}
+
+            if exc:
+                if not isinstance(exc, Exception):
+                    raise TypeError("Airbrake.Error expecting "
+                                    "<type 'exceptions.Exception'> "
+                                    "for keyword argument 'exc'. "
+                                    "Got %s instead, of type %s."
+                                    % (exc, str(type(exc))))
+                else:
+                    self.trace = sys.exc_info()[2]
+                    self.lastline = traceback.format_exc().splitlines()[-1]
+                    self.__error__.update({'type': exc.__class__.__name__,
+                                           'backtrace': [],
+                                           'message': self.lastline})
+                    self._format_backtrace()
+                    del self.trace
+
+            if record:
+                if not isinstance(record, basestring):
+                    raise TypeError("Airbrake.Error expecting "
+                                    "<type 'basestring'> "
+                                    "for keyword argument 'record'. "
+                                    "Got %s instead, of type %s."
+                                    % (record, str(type(record))))
+                else:
+                    self.__error__.update({'type': 'Record',
+                                           'message': record})
+
+            self.manager.errors.append(self.__error__)
 
         def _format_backtrace(self):
             """Format backtrace dict and append to the array of errors
@@ -225,4 +263,3 @@ class Airbrake(object):
                         'function': func}
                 self.__error__['backtrace'].append(line)
 
-            self.manager.errors.append(self.__error__)
