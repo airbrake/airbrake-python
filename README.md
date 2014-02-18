@@ -86,7 +86,7 @@ If auto-notify is disabled:
 
 ##### The params we passed to `ab.log()` end up here:  
 
-![params](https://github.rackspace.com/bk-box/python-airbrake/raw/master/data/airbrake_params.png)
+![params](https://raw.github.com/smlstvnh/airbrake-python/master/data/airbrake_params.png)
 
 
 -------
