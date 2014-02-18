@@ -1,7 +1,7 @@
 airbrake-python
 ===============
 
-Python library to export errors and exceptions to Airbrake.io
+Python library to export errors and exceptions to [airbrake.io](https://airbrake.io/)
 
 
 As a [logging](http://docs.python.org/2/library/logging.html) handler
