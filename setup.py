@@ -11,6 +11,7 @@ setup(
     version="1.0.0",
     author="BK Box",
     author_email="bk@theboxes.org",
+    url='https://github.com/airbrake/airbrake-python',
     install_requires=dependencies,
     packages=find_packages(exclude=['tests']),
     classifiers=["Programming Language :: Python"],
