@@ -13,14 +13,14 @@ Auto-notify is enabled by default:
      import logging
      import os
      
-     import airbrake
+     form airbrake.handler import AirbrakeHandler
      
      
      pid = os.environ['AIRBRAKE_PROJECT_ID']
      apikey = os.environ['AIRBRAKE_API_KEY']
      
      logger = logging.getLogger(__name__)
-     ab = airbrake.AirbrakeHandler(pid, apikey, "readmenv")
+     ab = AirbrakeHandler(pid, apikey, "readmenv")
      ab.setLevel(logging.DEBUG)
      logger.addHandler(ab)
      logger.setLevel(logging.DEBUG)
@@ -39,7 +39,7 @@ Or just use the module directly
 ```python
      import os
 
-     import airbrake
+     from airbrake.airbrake import Airbrake
      
      
      pid = os.environ['AIRBRAKE_PROJECT_ID']
@@ -63,7 +63,7 @@ If auto-notify is disabled:
 ```python
      import os
 
-     import airbrake
+     from airbrake.airbrake import Airbrake
      
      
      pid = os.environ['AIRBRAKE_PROJECT_ID']
