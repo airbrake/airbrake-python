@@ -13,7 +13,7 @@ Auto-notify is enabled by default:
      import logging
      import os
      
-     form airbrake.handler import AirbrakeHandler
+     from airbrake.handler import AirbrakeHandler
      
      
      pid = os.environ['AIRBRAKE_PROJECT_ID']
