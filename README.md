@@ -10,50 +10,50 @@ As a [logging](http://docs.python.org/2/library/logging.html) handler
 Auto-notify is enabled by default:
 
 ```python
-     import logging
-     import os
-     
-     from airbrake.handler import AirbrakeHandler
-     
-     
-     pid = os.environ['AIRBRAKE_PROJECT_ID']
-     apikey = os.environ['AIRBRAKE_API_KEY']
-     
-     logger = logging.getLogger(__name__)
-     ab = AirbrakeHandler(pid, apikey, "readmenv")
-     ab.setLevel(logging.DEBUG)
-     logger.addHandler(ab)
-     logger.setLevel(logging.DEBUG)
-     
-     # ab.airbrake.deploy()  # resolves errors
-     
-     try:
-         1/0
-     except Exception as exc:
-         logger.exception(exc)
+import logging
+import os
+
+from airbrake.handler import AirbrakeHandler
+
+
+pid = os.environ['AIRBRAKE_PROJECT_ID']
+apikey = os.environ['AIRBRAKE_API_KEY']
+
+logger = logging.getLogger(__name__)
+ab = AirbrakeHandler(pid, apikey, "readmenv")
+ab.setLevel(logging.DEBUG)
+logger.addHandler(ab)
+logger.setLevel(logging.DEBUG)
+
+# ab.airbrake.deploy()  # resolves errors
+
+try:
+    1/0
+except Exception as exc:
+    logger.exception(exc)
          
 ```
 
 Or just use the module directly
 ------------
 ```python
-     import os
+import os
 
-     from airbrake.airbrake import Airbrake
-     
-     
-     pid = os.environ['AIRBRAKE_PROJECT_ID']
-     apikey = os.environ['AIRBRAKE_API_KEY']
-     
-     ab = Airbrake(pid, apikey, "readmenv")
+from airbrake.airbrake import Airbrake
 
-     try:
-         interesting = {'field': 'TODO(sam): put better info here.',
-                        'git_blame': 'N/A',
-                        'netloc': 'http://app.example.com'}
-         1/0
-     except Exception as exc:
-         ab.log(exc, params=interesting)
+
+pid = os.environ['AIRBRAKE_PROJECT_ID']
+apikey = os.environ['AIRBRAKE_API_KEY']
+
+ab = Airbrake(pid, apikey, "readmenv")
+
+try:
+    interesting = {'field': 'TODO(sam): put better info here.',
+                   'git_blame': 'N/A',
+                   'netloc': 'http://app.example.com'}
+    1/0
+except Exception as exc:
+    ab.log(exc, params=interesting)
 ```
 
 
@@ -61,27 +61,27 @@ Or just use the module directly
 If auto-notify is disabled:
 
 ```python
-     import os
+import os
 
-     from airbrake.airbrake import Airbrake
-     
-     
-     pid = os.environ['AIRBRAKE_PROJECT_ID']
-     apikey = os.environ['AIRBRAKE_API_KEY']
-     
-     ab = Airbrake(pid, apikey, "readmenv", auto_notify=False)
+from airbrake.airbrake import Airbrake
 
-     try:
-         interesting = {'field': 'TODO(sam): put better info here.',
-                        'git_blame': 'N/A',
-                        'netloc': 'http://app.example.com'}
-         1/0
-     except Exception as exc:
-         ab.log(exc, params=interesting)
 
-     # more code, possible errors
+pid = os.environ['AIRBRAKE_PROJECT_ID']
+apikey = os.environ['AIRBRAKE_API_KEY']
 
-     ab.notify()
+ab = Airbrake(pid, apikey, "readmenv", auto_notify=False)
+
+try:
+    interesting = {'field': 'TODO(sam): put better info here.',
+                   'git_blame': 'N/A',
+                   'netloc': 'http://app.example.com'}
+    1/0
+except Exception as exc:
+    ab.log(exc, params=interesting)
+
+# more code, possible errors
+
+ab.notify()
 ```
 
 ##### The params we passed to `ab.log()` end up here:  
