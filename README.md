@@ -1,6 +1,8 @@
 airbrake-python
 ===============
 
+<img src="http://f.cl.ly/items/3Z1A202C1U2j3E1O1N0n/python%2009.19.32.jpg" width=800px>
+
 Python library to export errors and exceptions to [airbrake.io](https://airbrake.io/)
 
 
