@@ -3,6 +3,9 @@ import sys
 
 from airbrake import Airbrake
 
+DEFAULT_LOGGING_LEVEL = logging.ERROR
+FAKE_LOGRECORD = logging.LogRecord(*8*('',))
+
 class AirbrakeHandler(logging.Handler):
     """
     A handler class which ships logs to airbrake.io
@@ -11,18 +14,22 @@ class AirbrakeHandler(logging.Handler):
         * `project_id` AND `api_key`
         * an instance of airbrake.Airbrake
     """
-    def __init__(self, project_id=None, api_key=None, environment="dev",
-                 notifier=None, use_ssl=True, airbrake=None):
+    def __init__(self, airbrake=None, level=DEFAULT_LOGGING_LEVEL, **kwargs):
+        """Initialize the Airbrake handler with a default loggin level.
 
-        logging.Handler.__init__(self)
+        Default level of logs handled by this class are >= ERROR,
+        which includes ERROR and CRITICAL. To change this behavior
+        supply a different arguement for 'level'.
+        """
+
+        logging.Handler.__init__(self, level=level)
 
         if isinstance(airbrake, Airbrake):
             airbrake.auto_notify = True
             self.airbrake = airbrake
         else:
-            self.airbrake = Airbrake(project_id=project_id, api_key=api_key,
-                                     environment=environment, notifier=notifier,
-                                     use_ssl=use_ssl, auto_notify=True)
+            kwargs.pop('auto_notify', '')
+            self.airbrake = Airbrake(auto_notify=True, **kwargs)
 
     def emit(self, record):
         try:
