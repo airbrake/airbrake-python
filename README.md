@@ -3,9 +3,7 @@ airbrake-python
 
 <img src="http://f.cl.ly/items/3Z1A202C1U2j3E1O1N0n/python%2009.19.32.jpg" width=800px>
 
-Python library to export errors and exceptions to [airbrake.io](https://airbrake.io/)
-
-Airbrake integration for python that easily plugs into your existing code.
+[Airbrake](https://airbrake.io/) integration for python that quickly and easily plugs into your existing code.
 
 ```python
 import airbrake
@@ -14,24 +12,39 @@ logger = airbrake.getLogger()
 
 try:
     1/0
-except Exception as exc:
+except Exception:
     logger.exception("Bad math.")
 
 ```
-airbrake-python is used most effectively as a [logging](http://docs.python.org/2/library/logging.html) handler
+airbrake-python is used most effectively as a [logging](http://docs.python.org/2/library/logging.html) handler, and uses the [Airbrake V3 API](https://help.airbrake.io/kb/api-2/notifier-api-v3) for error reporting.
 
 ###install
+To install airbrake-python, run:
 ```bash
-pip install -U airbrake
+$ pip install -U airbrake
 ```
 
 ###setup
+The easiest way to get setup is with a few environment variables:
 ```bash
 export AIRBRAKE_API_KEY=*****
 export AIRBRAKE_PROJECT_ID=12345
 export AIRBRAKE_ENVIRONMENT=dev
 ```
+and you're done!  
 
+
+Otherwise, you can instantiate your `AirbrakeHandler` by passing these values as arguments to the `getLogger()` helper:
+```python
+import airbrake
+
+logger = airbrake.getLogger(api_key=*****, project_id=12345)
+
+try:
+    1/0
+except Exception:
+    logger.exception("Bad math.")
+```
 
 ####give your exceptions more context
 ```python
