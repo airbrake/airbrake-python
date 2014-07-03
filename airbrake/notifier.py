@@ -8,10 +8,12 @@ import socket
 import sys
 import traceback
 import urlparse
+import warnings
 
 import requests
 
-LOG = logging.getLogger(__name__)
+from airbrake import __notifier__ as airbrake_python_notifier
+from airbrake import utils
 
 
 class Airbrake(object):
@@ -26,17 +28,17 @@ class Airbrake(object):
     will automatically be shipped; otherwise, logged errors will be
     aggregated and shipped as a group when Airbrake.notify() is called.
 
-    Usage:
+    Non-logging Handler usage:
 
-    Auto-notify is enabled by default:
+    // Auto-notify is enabled by default
 
         import airbrake
         ab = Airbrake(project_id="1234", api_key="1234")
 
         try:
             1/0
-        except Exception as exc:
-            ab.log(exc)
+        except Exception:
+            ab.log()
 
     If auto-notify is disabled:
 
@@ -46,31 +48,22 @@ class Airbrake(object):
         try:
             1/0
         except Exception as exc:
-            ab.log(exc)
+            ab.log()
 
         # more code, possible errors
 
         ab.notify()
 
-    The above are decent enough examples, but you'll probably want
-    to include a `notifier` dictionary upon instantiating Airbrake.
-
-    :param notifier: The notifier client. Describes the notifier
-                     client submitting the request.
-                     Should contain 'name', 'version', and 'url'
-    :type notifier: dict
-
     The airbrake.io docs used to implements this class are here:
         http://help.airbrake.io/kb/api-2/notifier-api-v3
     """
 
-    def __init__(self, project_id=None, api_key=None, environment="dev",
-                 notifier=None, use_ssl=True, auto_notify=True):
+    def __init__(self, project_id=None, api_key=None, environment=None,
+                 use_ssl=True, auto_notify=True):
 
         #properties
         self._api_url = None
         self._env_context = None
-        self._calling_module = None
         self.deploy_url = "http://api.airbrake.io/deploys.txt"
 
         if not environment:
@@ -81,18 +74,20 @@ class Airbrake(object):
         if not api_key:
             api_key = os.getenv('AIRBRAKE_API_KEY', '')
 
-        self.auto_notify = auto_notify
+        self.environment = str(environment)
         self.project_id = str(project_id)
         self.api_key = str(api_key)
         self.auto_notify = auto_notify
         self.use_ssl = use_ssl
         self.errors = []
+        self.payload_params = {}
+        self.payload_session = {}
         self.payload = {'context': self.context,
-                        'params': {},
+                        'params': self.payload_params,
                         'errors': self.errors,
-                        'notifier': self.notifier,
+                        'notifier': airbrake_python_notifier,
                         'environment': {},
-                        'session': {}}
+                        'session': self.payload_session}
 
     def __repr__(self):
         return ("Airbrake(project_id=%s, api_key=*****, environment=%s, "
@@ -113,6 +108,11 @@ class Airbrake(object):
             self._env_context.update({'os': plat})
             # env name
             self._env_context.update({'environment': self.environment})
+            # TODO(samstav)
+            #   add user info:
+            #       userID, userName, userEmail
+            #   add application info:
+            #       version, url, rootDirectory
         return self._env_context
 
     @property
@@ -129,20 +129,12 @@ class Airbrake(object):
                 else:
                     self._api_url = address
             else:
-                LOG.warning("API Key and Project ID required for airbrake.io")
-
+                warnings.warn("API Key and Project ID required "
+                              "for airbrake.io")
         return self._api_url
 
-    @property
-    def calling_module(self):
-        """Should be called from Airbrake.__init__
-        Not otherwise smart enough yet.
-        """
-        if not self._calling_module:
-            self._calling_module = inspect.stack()[2][1]
-        return self._calling_module
-
-    def log(self, exc=None, record=None, params=None):
+    def log(self, exc_info=None, message=None, filename=None,
+            line=None, function=None, errtype=None, **params):
         """Acknowledge an error, prepare it to be shipped to Airbrake,
         and append to Airbrake.errors. If Airbrake.auto_notify=True, the error
         will also be shipped to Airbrake immediately; otherwise, all
@@ -155,20 +147,22 @@ class Airbrake(object):
                        convenience, assuming log() is the primary function
                        used in this module.
         """
-        if params:
-            if not isinstance(params, dict):
-                LOG.warning("Unable to set `params`. "
-                            "Payload 'params' should be a dictionary.")
+        self.payload_params.update(params)
+
+        if isinstance(exc_info, Exception):
+            errmessage = utils.pytb_lastline(exc_info)
+            exc_info = None
+            if message:
+                message = "%s | %s" % (message, errmessage)
             else:
-                self.payload['params'] = params
+                message = errmessage
 
-        if exc:
-            error = Airbrake.Error(self, exc=exc)
+        error = Error(
+            exc_info=exc_info, message=message, filename=filename,
+            line=line, function=function, errtype=errtype)
+        self.errors.append(error.data)
 
-        if record:
-            error = Airbrake.Error(self, record=record)
-
-        if self.auto_notify == True:
+        if self.auto_notify:
             self.notify()
         return error
 
@@ -177,9 +171,11 @@ class Airbrake(object):
         Airbrake.log() and resets the errors list in `errors` attribute.
         """
         if self.api_url is None:
-            LOG.warning("The API endpoint has not been defined, this likely"
-                        "means that proper API key and project ID have not"
-                        "been provided.")
+            warnings.warn("The API endpoint has not been defined, "
+                          "this probably means that your airbrake.io API Key "
+                          "and Project ID have not been provided. You can set "
+                          "these using environment variables AIRBRAKE_API_KEY "
+                          "and AIRBRAKE_PROJECT_ID.")
             return None
 
         headers = {'Content-Type': 'application/json'}
@@ -187,20 +183,22 @@ class Airbrake(object):
 
         if not self.errors:
             msg = "No errors to ship. Maybe your code isn't so bad."
-            LOG.warning(msg)
+            LOG.info(msg)
 
         response = requests.post(self.api_url, data=json.dumps(self.payload),
                                  headers=headers, params=api_key)
         response.raise_for_status()
+        self._reset()
+        return response
+
+    def _reset(self):
         del self.errors[:]
-        return response.status_code
+        self.payload_params.clear()
+        self.payload_session.clear()
 
     def deploy(self, env=None):
 
-        if env:
-            environment = env
-        else:
-            environment = self.environment
+        environment = env or self.environment
 
         params = {'api_key': self.api_key,
                   'deploy[rails_env]': str(environment)}
@@ -209,61 +207,67 @@ class Airbrake(object):
         response.raise_for_status()
         return response.status_code
 
-    class Error(object):
-        """Not to be used directly. This nested class formats exception
-        related info to adhere to the schema defined in the airbrake.io
-        documentation.
 
-        The airbrake.io docs used to implements this class are here:
-            http://help.airbrake.io/kb/api-2/notifier-api-v3
-        """
+class Error(object):
+    """Format the exception according to what is expected by airbrake.io.
 
-        def __init__(self, manager, exc=None, record=None):
+    The airbrake.io docs used to implements this class are here:
+        http://help.airbrake.io/kb/api-2/notifier-api-v3
 
-            self.manager = manager
+    If the global sys.exc_info is to be read/used, it should be done here.
+    """
 
-            #default (to be overwritten)
-            self.__error__ = {'type': "N/A",
-                              'backtrace': [{'file': "N/A",
-                                             'line': 1,
-                                             'function': "N/A"}],
-                              'message': "N/A"}
+    def __init__(self, exc_info=None, message=None, filename=None,
+                 line=None, function=None, errtype=None):
 
-            if exc:
-                if not isinstance(exc, Exception):
-                    raise TypeError("Airbrake.Error expecting "
-                                    "<type 'exceptions.Exception'> "
-                                    "for keyword argument 'exc'. "
-                                    "Got %s instead, of type %s."
-                                    % (exc, str(type(exc))))
-                else:
-                    self.trace = sys.exc_info()[2]
-                    self.lastline = traceback.format_exc().splitlines()[-1]
-                    self.__error__.update({'type': exc.__class__.__name__,
-                                           'backtrace': [],
-                                           'message': self.lastline})
-                    self._format_backtrace()
-                    del self.trace
+        #default (to be overwritten)
+        self.data = {
+            'type': errtype or "Record",
+            'backtrace': [{'file': filename or "N/A",
+                           'line': line or 1,
+                           'function': function or "N/A"}],
+            'message': message or "N/A"}
 
-            if record:
-                if not isinstance(record, basestring):
-                    raise TypeError("Airbrake.Error expecting "
-                                    "<type 'basestring'> "
-                                    "for keyword argument 'record'. "
-                                    "Got %s instead, of type %s."
-                                    % (record, str(type(record))))
-                else:
-                    self.__error__.update({'type': 'Record',
-                                           'message': record})
+        # get current exception info
+        self._exc_info = sys.exc_info()
+        if not exc_info:
+            exc_info = self._exc_info
+        self.exc_info = exc_info
 
-            self.manager.errors.append(self.__error__)
+        if len(self.exc_info) == 3 and isinstance(self.exc_info, tuple):
+            if not all(self.exc_info):
+                return
+            # if exc_info is a FQ exception info tuple
+            try:
+                # using method from traceback module to verify the tuple
+                self.formatted_exc = traceback.format_exception(*self.exc_info)
+            except (AttributeError, TypeError) as err:
+                err.message = ("Airbrake module received unsupported "
+                                "'exc_info' type. Should be a sys.exc_info() "
+                                "tuple, a string, or None. Invalid argument "
+                                "was %s | %s"
+                                % (self.exc_info, err.message))
+                raise err.__class__(err.message)
 
-        def _format_backtrace(self):
-            """Format backtrace dict and append to the array of errors
-            managed by the Airbrake instance."""
-            for filename, line, func, _ in traceback.extract_tb(self.trace):
-                line = {'file': filename,
-                        'line': line,
-                        'function': func}
-                self.__error__['backtrace'].append(line)
+            tbmessage = utils.pytb_lastline(self.exc_info)
+            self.data.update(
+                {'type': self.exc_info[1].__class__.__name__,
+                'backtrace': self.format_backtrace(self.exc_info[2]),
+                'message': tbmessage})
+        else:
+            raise ValueError("Airbrake module received unsupported "
+                                "'exc_info' type. Should be a sys.exc_info() "
+                                "tuple. Invalid argument was of type %s"
+                                % type(self.exc_info))
+
+    def format_backtrace(self, trace):
+        """Format backtrace dict and append to the array of errors
+        managed by the Airbrake instance."""
+        backtrace = []
+        for filename, line, func, _ in traceback.extract_tb(trace):
+            desc = {'file': filename,
+                    'line': line,
+                    'function': func}
+            backtrace.append(desc)
+        return backtrace
 

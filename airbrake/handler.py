@@ -33,21 +33,26 @@ class AirbrakeHandler(logging.Handler):
 
     def emit(self, record):
         try:
-            # exception
-            exc = None
-            if record.exc_info:
-                exc = record.exc_info[1]
-            if not exc:
-                exc = sys.exc_info()[1]
-            if exc:
-                self.airbrake.log(exc=exc)
-                return
+            params = {
+                'created': record.created,
+                'process_id': record.process,
+                'process_name': record.processName,
+                'thread_name': record.threadName,
+                'lineno': record.lineno,
+                'pathname': record.pathname,
+                'funcName': record.funcName,
+                'msg': record.getMessage()}
 
-            # record
-            record = record.getMessage()
-            if record:
-                self.airbrake.log(record=record)
+            # find params from kwarg 'extra'
+            for key, val in vars(record).items():
+                if not hasattr(FAKE_LOGRECORD, key):
+                    params[key] = val
 
+            errtype = "%s:%s" % (record.levelname, record.filename)
+            self.airbrake.log(
+                exc_info=record.exc_info, message=record.getMessage(),
+                filename=record.pathname, line=record.lineno,
+                function=record.funcName, errtype=errtype, **params)
         except (KeyboardInterrupt, SystemExit):
             raise
         except:
