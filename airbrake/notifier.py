@@ -2,7 +2,9 @@
 import inspect
 import json
 import logging
+import os
 import platform
+import socket
 import sys
 import traceback
 import urlparse
@@ -71,17 +73,19 @@ class Airbrake(object):
         self._calling_module = None
         self.deploy_url = "http://api.airbrake.io/deploys.txt"
 
-        if notifier is None:
-            notifier = {'name': self.calling_module,
-                        'version': '1.0.0',
-                        'url': 'http://app.example.com'}
-        self.notifier = notifier
+        if not environment:
+            environment = (os.getenv('AIRBRAKE_ENVIRONMENT') or
+                           socket.gethostname())
+        if not project_id:
+            project_id = os.getenv('AIRBRAKE_PROJECT_ID', '')
+        if not api_key:
+            api_key = os.getenv('AIRBRAKE_API_KEY', '')
 
         self.auto_notify = auto_notify
         self.project_id = str(project_id)
-        self.api_key = api_key
+        self.api_key = str(api_key)
+        self.auto_notify = auto_notify
         self.use_ssl = use_ssl
-        self.environment = str(environment)
         self.errors = []
         self.payload = {'context': self.context,
                         'params': {},
