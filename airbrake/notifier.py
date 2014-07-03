@@ -1,7 +1,5 @@
 """Airbrake object to handle airbrake.io reporting."""
-import inspect
 import json
-import logging
 import os
 import platform
 import socket
@@ -65,6 +63,7 @@ class Airbrake(object):
         self._api_url = None
         self._env_context = None
         self.deploy_url = "http://api.airbrake.io/deploys.txt"
+        self.notifier = airbrake_python_notifier
 
         if not environment:
             environment = (os.getenv('AIRBRAKE_ENVIRONMENT') or
@@ -85,14 +84,14 @@ class Airbrake(object):
         self.payload = {'context': self.context,
                         'params': self.payload_params,
                         'errors': self.errors,
-                        'notifier': airbrake_python_notifier,
+                        'notifier': self.notifier,
                         'environment': {},
                         'session': self.payload_session}
 
     def __repr__(self):
         return ("Airbrake(project_id=%s, api_key=*****, environment=%s, "
-                "notifier=%s, use_ssl=%s, auto_notify=%s"
-                % (self.project_id, self.environment, self.notifier,
+                "use_ssl=%s, auto_notify=%s"
+                % (self.project_id, self.environment,
                    self.use_ssl, self.auto_notify))
 
     @property
@@ -117,7 +116,7 @@ class Airbrake(object):
 
     @property
     def api_url(self):
-        """Create the airbrake api endpoint and returns a string."""
+        """Create the airbrake api endpoint and return a string."""
         if not self._api_url:
             if self.project_id and self.api_key:
                 address = ("http://airbrake.io/api/v3/projects/%s/notices"
@@ -140,12 +139,14 @@ class Airbrake(object):
         will also be shipped to Airbrake immediately; otherwise, all
         logged errors will be shipped on the next call to Airbrake.notify().
 
-        :param exc:    Exception instance to log.
-        :param record: Log record.
-        :param params: Payload field "params" which only has one definition
-                       per call to notify(). It is definable here only for
-                       convenience, assuming log() is the primary function
-                       used in this module.
+        :param exc_info:    Exception tuple to use for formatting request.
+        :param message:     Message accompanying error.
+        :param filename:    Name of file where error occurred.
+        :param line:        Line number in file where error occurred.
+        :param function:    Function name where error occurred.
+        :param errtype:     Type of error which occurred.
+        :param params:      Payload field "params" which may contain any other
+                            context related to the exception(s).
         """
         self.payload_params.update(params)
 
@@ -182,8 +183,7 @@ class Airbrake(object):
         api_key = {'key': self.api_key}
 
         if not self.errors:
-            msg = "No errors to ship. Maybe your code isn't so bad."
-            LOG.info(msg)
+            return
 
         response = requests.post(self.api_url, data=json.dumps(self.payload),
                                  headers=headers, params=api_key)
@@ -270,4 +270,3 @@ class Error(object):
                     'function': func}
             backtrace.append(desc)
         return backtrace
-
