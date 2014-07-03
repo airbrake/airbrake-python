@@ -1,17 +1,25 @@
 from setuptools import setup, find_packages
 
+from airbrake import __version__ as version
+from airbrake import __url__ as url
+
 dependencies = [
     'requests>=2.2.1'
+]
+tests_require = [
+    'testfixtures'
 ]
 
 setup(
     name='airbrake',
     description='Airbrake API implementation',
     keywords='airbrake exception',
-    version="1.0.0",
-    author="BK Box",
+    version=version,
+    author="BK Box, Sam Stavinoha",
     author_email="bk@theboxes.org",
-    url='https://github.com/airbrake/airbrake-python',
+    url=url,
+    tests_require=tests_require,
+    test_suite='tests',
     install_requires=dependencies,
     packages=find_packages(exclude=['tests']),
     classifiers=["Programming Language :: Python"],
