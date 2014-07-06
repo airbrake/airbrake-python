@@ -25,7 +25,7 @@ DEFAULT_LOGGER_PREFIX = "airbrake-python-"
 
 logging.basicConfig()
 
-def getLogger(name=None, **airbrake):
+def getLogger(name=None, **kwargs):
 
     if not name:
         curframe = inspect.currentframe()
@@ -34,7 +34,7 @@ def getLogger(name=None, **airbrake):
             callingpath.rpartition('.')[0] or callingpath)[-1]
         name = "%s%s" % (DEFAULT_LOGGER_PREFIX, name)
     logger = logging.getLogger(name)
-    ab = AirbrakeHandler(**airbrake)
+    ab = AirbrakeHandler(**kwargs)
     logger.addHandler(ab)
     if logger.level == logging.NOTSET:
         logger.setLevel(ab.level)
