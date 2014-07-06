@@ -1,4 +1,19 @@
 import traceback
+import types
+
+
+def is_exc_info_tuple(exc_info):
+    try:
+        errtype, value, tb = exc_info
+        if all(map(lambda x: x is None, exc_info)):
+            return True
+        elif all((isinstance(errtype, types.TypeType),
+                  isinstance(value, Exception),
+                  isinstance(tb, types.TracebackType))):
+            return True
+    except (TypeError, ValueError):
+        pass
+    return False
 
 def pytb_lastline(excinfo=None):
     """Return the actual last line of the (current) traceback.
