@@ -88,6 +88,13 @@ class Airbrake(object):
                         'environment': {},
                         'session': self.payload_session}
 
+        if not all((self.project_id, self.api_key)):
+            raise TypeError("Airbrake API Key (api_key) and Project ID "
+                            "(project_id) must be set. These values "
+                            "may be set using the environment variables "
+                            "AIRBRAKE_API_KEY and AIRBRAKE_PROJECT_ID or "
+                            "by passing in the arguments explicitly.")
+
     def __repr__(self):
         return ("Airbrake(project_id=%s, api_key=*****, environment=%s, "
                 "use_ssl=%s, auto_notify=%s"
@@ -118,18 +125,9 @@ class Airbrake(object):
     def api_url(self):
         """Create the airbrake api endpoint and return a string."""
         if not self._api_url:
-            if self.project_id and self.api_key:
-                address = ("http://airbrake.io/api/v3/projects/%s/notices"
-                           % self.project_id)
-                if self.use_ssl:
-                    api_endpoint = urlparse.urlparse(address)
-                    self._api_url = api_endpoint._replace(
-                        scheme="https").geturl()
-                else:
-                    self._api_url = address
-            else:
-                warnings.warn("API Key and Project ID required "
-                              "for airbrake.io")
+            self._api_url = (
+                 "https://airbrake.io/api/v3/projects/%s/notices"
+                  % self.project_id)
         return self._api_url
 
     def log(self, exc_info=None, message=None, filename=None,
@@ -171,13 +169,6 @@ class Airbrake(object):
         """Post the JSON body to airbrake.io. Ships all errors aggregated by
         Airbrake.log() and resets the errors list in `errors` attribute.
         """
-        if self.api_url is None:
-            warnings.warn("The API endpoint has not been defined, "
-                          "this probably means that your airbrake.io API Key "
-                          "and Project ID have not been provided. You can set "
-                          "these using environment variables AIRBRAKE_API_KEY "
-                          "and AIRBRAKE_PROJECT_ID.")
-            return None
 
         headers = {'Content-Type': 'application/json'}
         api_key = {'key': self.api_key}
