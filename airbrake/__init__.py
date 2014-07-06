@@ -7,7 +7,7 @@
 
 __version__ = "1.1.0"
 __url__ = "https://github.com/airbrake/airbrake-python"
-__notifier__ = {
+_notifier = {
     'name': 'airbrake-python',
     'version': __version__,
     'url': __url__

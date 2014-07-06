@@ -10,7 +10,7 @@ import warnings
 
 import requests
 
-from airbrake import __notifier__ as airbrake_python_notifier
+from airbrake import _notifier as airbrake_python_notifier
 from airbrake import utils
 
 
