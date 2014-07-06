@@ -46,7 +46,7 @@ class Airbrake(object):
 
         #properties
         self._api_url = None
-        self._env_context = None
+        self._context = None
         self.deploy_url = "http://api.airbrake.io/deploys.txt"
         self.notifier = airbrake_python_notifier
 
@@ -85,22 +85,22 @@ class Airbrake(object):
     @property
     def context(self):
         """Contains the python, os, and app environment context."""
-        if not self._env_context:
-            self._env_context = {}
+        if not self._context:
+            self._context = {}
             # python
             version = platform.python_version()
-            self._env_context.update({'language': 'Python %s' % version})
+            self._context.update({'language': 'Python %s' % version})
             # os
             plat = platform.platform()
-            self._env_context.update({'os': plat})
+            self._context.update({'os': plat})
             # env name
-            self._env_context.update({'environment': self.environment})
+            self._context.update({'environment': self.environment})
             # TODO(samstav)
             #   add user info:
             #       userID, userName, userEmail
             #   add application info:
             #       version, url, rootDirectory
-        return self._env_context
+        return self._context
 
     @property
     def api_url(self):
