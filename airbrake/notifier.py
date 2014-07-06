@@ -1,4 +1,8 @@
-"""Airbrake object to handle airbrake.io reporting."""
+"""Airbrake notifier client module.
+
+Initialize this class to ship errors to airbrake.io
+using the log() method.
+"""
 import json
 import os
 import platform
@@ -16,19 +20,15 @@ from airbrake import utils
 
 class Airbrake(object):
     """
-    Class to handle exceptions that need to be sent to airbrake.io
+    Class to handle exceptions, format & ship to airbrake.io.
 
     The payload (dict) to be POSTed as json is defined by an
     instance's `payload` attribute, which can be modified after
     Airbrake instantiation.
 
-    If auto_notify=True (default), errors logged ( using Airbrake.log() )
-    will automatically be shipped; otherwise, logged errors will be
-    aggregated and shipped as a group when Airbrake.notify() is called.
+    Errors logged ( using Airbrake.log() ) will automatically be shipped.
 
-    Non-logging Handler usage:
-
-    // Auto-notify is enabled by default
+    Usage *without* AirbrakeHandler:
 
         import airbrake
         ab = Airbrake(project_id="1234", api_key="1234")
@@ -38,26 +38,11 @@ class Airbrake(object):
         except Exception:
             ab.log()
 
-    If auto-notify is disabled:
-
-        import airbrake
-        ab = Airbrake(project_id="1234", api_key="1234", auto_notify=False)
-
-        try:
-            1/0
-        except Exception as exc:
-            ab.log()
-
-        # more code, possible errors
-
-        ab.notify()
-
-    The airbrake.io docs used to implements this class are here:
+    The airbrake.io docs used to implement this class are here:
         http://help.airbrake.io/kb/api-2/notifier-api-v3
     """
 
-    def __init__(self, project_id=None, api_key=None, environment=None,
-                 use_ssl=True, auto_notify=True):
+    def __init__(self, project_id=None, api_key=None, environment=None):
 
         #properties
         self._api_url = None
@@ -76,8 +61,6 @@ class Airbrake(object):
         self.environment = str(environment)
         self.project_id = str(project_id)
         self.api_key = str(api_key)
-        self.auto_notify = auto_notify
-        self.use_ssl = use_ssl
         self.errors = []
         self.payload_params = {}
         self.payload_session = {}
@@ -96,10 +79,8 @@ class Airbrake(object):
                             "by passing in the arguments explicitly.")
 
     def __repr__(self):
-        return ("Airbrake(project_id=%s, api_key=*****, environment=%s, "
-                "use_ssl=%s, auto_notify=%s"
-                % (self.project_id, self.environment,
-                   self.use_ssl, self.auto_notify))
+        return ("Airbrake(project_id=%s, api_key=*****, environment=%s)"
+                % (self.project_id, self.environment))
 
     @property
     def context(self):
@@ -132,10 +113,7 @@ class Airbrake(object):
 
     def log(self, exc_info=None, message=None, filename=None,
             line=None, function=None, errtype=None, **params):
-        """Acknowledge an error, prepare it to be shipped to Airbrake,
-        and append to Airbrake.errors. If Airbrake.auto_notify=True, the error
-        will also be shipped to Airbrake immediately; otherwise, all
-        logged errors will be shipped on the next call to Airbrake.notify().
+        """Acknowledge an error and post it to airbrake.io.
 
         :param exc_info:    Exception tuple to use for formatting request.
         :param message:     Message accompanying error.
@@ -161,14 +139,10 @@ class Airbrake(object):
             line=line, function=function, errtype=errtype)
         self.errors.append(error.data)
 
-        if self.auto_notify:
-            self.notify()
-        return error
+        return self.notify()
 
     def notify(self):
-        """Post the JSON body to airbrake.io. Ships all errors aggregated by
-        Airbrake.log() and resets the errors list in `errors` attribute.
-        """
+        """Post the current errors payload body to airbrake.io.
 
         headers = {'Content-Type': 'application/json'}
         api_key = {'key': self.api_key}
