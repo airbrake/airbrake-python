@@ -124,15 +124,30 @@ class Airbrake(object):
         :param params:      Payload field "params" which may contain any other
                             context related to the exception(s).
         """
-        self.payload_params.update(params)
 
-        if isinstance(exc_info, Exception):
-            errmessage = utils.pytb_lastline(exc_info)
-            exc_info = None
-            if message:
+        if not utils.is_exc_info_tuple(exc_info):
+            # compatibility, allows exc_info not to be a exc tuple
+            errmessage = None
+            if isinstance(exc_info, Exception):
+                errmessage = utils.pytb_lastline(exc_info)
+            elif exc_info:
+                try:
+                    errmessage = json.dumps(exc_info)
+                except (ValueError, TypeError):
+                    errmessage = str(exc_info)
+            if errmessage:
+                # this way, if exc_info kwarg is passed to logger method,
+                # its value will be available in params
+                params['exc_info'] = errmessage
+
+            if message and errmessage and message != errmessage:
                 message = "%s | %s" % (message, errmessage)
-            else:
+            elif errmessage:
                 message = errmessage
+
+            exc_info = sys.exc_info()
+
+        self.payload_params.update(params)
 
         error = Error(
             exc_info=exc_info, message=message, filename=filename,
@@ -144,6 +159,8 @@ class Airbrake(object):
     def notify(self):
         """Post the current errors payload body to airbrake.io.
 
+        Resets the errors list in self.errors
+        """
         headers = {'Content-Type': 'application/json'}
         api_key = {'key': self.api_key}
 
@@ -185,7 +202,9 @@ class Error(object):
     def __init__(self, exc_info=None, message=None, filename=None,
                  line=None, function=None, errtype=None):
 
-        #default (to be overwritten)
+        self.exc_info = exc_info
+
+        #default datastructure
         self.data = {
             'type': errtype or "Record",
             'backtrace': [{'file': filename or "N/A",
@@ -193,45 +212,29 @@ class Error(object):
                            'function': function or "N/A"}],
             'message': message or "N/A"}
 
-        # get current exception info
-        self._exc_info = sys.exc_info()
-        if not exc_info:
-            exc_info = self._exc_info
-        self.exc_info = exc_info
-
-        if len(self.exc_info) == 3 and isinstance(self.exc_info, tuple):
+        if utils.is_exc_info_tuple(self.exc_info):
             if not all(self.exc_info):
                 return
-            # if exc_info is a FQ exception info tuple
-            try:
-                # using method from traceback module to verify the tuple
-                self.formatted_exc = traceback.format_exception(*self.exc_info)
-            except (AttributeError, TypeError) as err:
-                err.message = ("Airbrake module received unsupported "
-                                "'exc_info' type. Should be a sys.exc_info() "
-                                "tuple, a string, or None. Invalid argument "
-                                "was %s | %s"
-                                % (self.exc_info, err.message))
-                raise err.__class__(err.message)
-
             tbmessage = utils.pytb_lastline(self.exc_info)
             self.data.update(
                 {'type': self.exc_info[1].__class__.__name__,
-                'backtrace': self.format_backtrace(self.exc_info[2]),
-                'message': tbmessage})
+                 'backtrace': format_backtrace(self.exc_info[2]),
+                 'message': tbmessage})
         else:
-            raise ValueError("Airbrake module received unsupported "
-                                "'exc_info' type. Should be a sys.exc_info() "
-                                "tuple. Invalid argument was of type %s"
-                                % type(self.exc_info))
+            raise TypeError(
+                "Airbrake module (notifier.Error) received "
+                "unsupported 'exc_info' type. Should be a "
+                "3-piece tuple as returned by sys.exc_info(). "
+                "Invalid argument was %s"
+                % self.exc_info)
 
-    def format_backtrace(self, trace):
-        """Format backtrace dict and append to the array of errors
-        managed by the Airbrake instance."""
-        backtrace = []
-        for filename, line, func, _ in traceback.extract_tb(trace):
-            desc = {'file': filename,
-                    'line': line,
-                    'function': func}
-            backtrace.append(desc)
-        return backtrace
+
+def format_backtrace(trace):
+    """Create a formatted dictionary from a traceback object."""
+    backtrace = []
+    for filename, line, func, _ in traceback.extract_tb(trace):
+        desc = {'file': filename,
+                'line': line,
+                'function': func}
+        backtrace.append(desc)
+    return backtrace
