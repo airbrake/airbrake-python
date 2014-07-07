@@ -7,6 +7,7 @@ dependencies = [
     'requests>=2.2.1'
 ]
 tests_require = [
+    'mock',
     'testfixtures'
 ]
 
