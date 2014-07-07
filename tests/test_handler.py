@@ -1,38 +1,56 @@
 import logging
+import os
 import unittest
 
+import mock
 from testfixtures import log_capture
 
 import airbrake
 
-
-
-class TestAirbrakeLoggerHelper(unittest.TestCase):
-
-    def test_auto_logger_name_is_calling_module(self):
-        logger = airbrake.getLogger()
-        self.assertEqual(logger.name, airbrake.DEFAULT_LOGGER_PREFIX + __name__)
-
-    def test_auto_logger_has_airbrake_handler(self):
-        logger = airbrake.getLogger()
-        isabhandler = lambda x: isinstance(x, airbrake.AirbrakeHandler)
-        self.assertTrue(any(map(isabhandler, logger.handlers)))
-
-    def test_auto_logger_has_level(self):
-        logger = airbrake.getLogger()
-        self.assertTrue(
-            logger.isEnabledFor(airbrake.handler.DEFAULT_LOGGING_LEVEL))
-
-    def test_auto_logger_given_name(self):
-        logger = airbrake.getLogger('my_module')
-        self.assertTrue(
-            logger.isEnabledFor(airbrake.handler.DEFAULT_LOGGING_LEVEL))
-
-class TestAirbrakeHandler(unittest.TestCase):
+class TestAirbrake(unittest.TestCase):
 
     def setUp(self):
-        self.logger = airbrake.getLogger()
+        super(TestAirbrake, self).setUp()
+        self.notify_patcher = mock.patch.object(
+            airbrake.notifier.Airbrake, 'notify')
+        self.notify_patcher.start()
+        self.logger = airbrake.getLogger(
+            api_key='fakekey', project_id='fakeprojectid')
         self.logmsg = "There's your problem, right there."
+
+    def tearDown(self):
+        self.notify_patcher.stop()
+        super(TestAirbrake, self).tearDown()
+
+    def test_throws_missing_values(self):
+        self.assertRaises(TypeError, airbrake.getLogger)
+        self.assertRaises(
+            TypeError, airbrake.getLogger, project_id='fakeprojectid')
+        self.assertRaises(
+            TypeError, airbrake.getLogger, api_key='fakeapikey')
+
+class TestAirbrakeLoggerHelper(TestAirbrake):
+
+    def test_auto_logger_name_is_calling_module(self):
+        self.assertEqual(
+            self.logger.name, airbrake.DEFAULT_LOGGER_PREFIX + __name__)
+
+    def test_auto_logger_has_airbrake_handler(self):
+        isabhandler = lambda x: isinstance(x, airbrake.AirbrakeHandler)
+        self.assertTrue(any(map(isabhandler, self.logger.handlers)))
+
+    def test_auto_logger_has_level(self):
+        self.assertTrue(
+            self.logger.isEnabledFor(airbrake.handler.DEFAULT_LOGGING_LEVEL))
+
+    def test_auto_logger_given_name(self):
+        logger = airbrake.getLogger(
+            'my_module', api_key='fakekey', project_id='fakeprojectid')
+        self.assertTrue(
+            logger.isEnabledFor(airbrake.handler.DEFAULT_LOGGING_LEVEL))
+
+
+class TestAirbrakeHandler(TestAirbrake):
 
     @log_capture(level=airbrake.handler.DEFAULT_LOGGING_LEVEL)
     def do_some_logs(self, l):
@@ -44,7 +62,8 @@ class TestAirbrakeHandler(unittest.TestCase):
         try:
             1/0
         except Exception:
-            self.logger.exception("Hate when this happens.", extra={'this': 'wins'})
+            self.logger.exception("Hate when this happens.",
+                                  extra={'this': 'wins'})
 
         try:
             undefined
