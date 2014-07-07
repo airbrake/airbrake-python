@@ -177,6 +177,7 @@ class Airbrake(object):
         del self.errors[:]
         self.payload_params.clear()
         self.payload_session.clear()
+        sys.exc_clear()
 
     def deploy(self, env=None):
 
