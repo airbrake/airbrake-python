@@ -11,6 +11,12 @@ def run_test():
     except ZeroDivisionError:
         logger.exception("Bad math.")
 
+    try:
+        undefined
+    except Exception as err:
+        logger.exception("Undefined things!",
+            extra={'additional': 'context', 'key1': 'val1'})
+
     logger.error("No exception, but something to be concerned about.")
 
     for handler in logger.handlers:

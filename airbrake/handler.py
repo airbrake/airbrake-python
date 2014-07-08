@@ -82,7 +82,7 @@ def airbrake_error_from_logrecord(record):
         airbrakeerror['errtype'] = "%s:%s" % (record.levelname,
                                               record.filename)
 
-    airbrakeerror['params'] = params
+    airbrakeerror.update(params)
     airbrakeerror['exc_info'] = record.exc_info
     airbrakeerror['message'] = record.getMessage()
     airbrakeerror['filename'] = record.pathname
