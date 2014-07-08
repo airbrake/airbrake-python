@@ -16,7 +16,7 @@ except Exception:
     logger.exception("Bad math.")
 
 ```
-airbrake-python is used most effectively as a [logging](http://docs.python.org/2/library/logging.html) handler, and uses the [Airbrake V3 API](https://help.airbrake.io/kb/api-2/notifier-api-v3) for error reporting.
+airbrake-python is used most effectively through its [logging](http://docs.python.org/2/library/logging.html) handler, and uses the [Airbrake V3 API](https://help.airbrake.io/kb/api-2/notifier-api-v3) for error reporting.
 
 ###install
 To install airbrake-python, run:
