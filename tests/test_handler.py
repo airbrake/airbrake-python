@@ -23,6 +23,8 @@ class TestAirbrake(unittest.TestCase):
         super(TestAirbrake, self).tearDown()
 
     def test_throws_missing_values(self):
+        os.environ['AIRBRAKE_PROJECT_ID'] = ''
+        os.environ['AIRBRAKE_API_KEY'] = ''
         self.assertRaises(TypeError, airbrake.getLogger)
         self.assertRaises(
             TypeError, airbrake.getLogger, project_id='fakeprojectid')
@@ -33,7 +35,7 @@ class TestAirbrakeLoggerHelper(TestAirbrake):
 
     def test_auto_logger_name_is_calling_module(self):
         self.assertEqual(
-            self.logger.name, airbrake.DEFAULT_LOGGER_PREFIX + __name__)
+            self.logger.name, 'airbrake-python-' + __name__)
 
     def test_auto_logger_has_airbrake_handler(self):
         isabhandler = lambda x: isinstance(x, airbrake.AirbrakeHandler)
@@ -41,18 +43,18 @@ class TestAirbrakeLoggerHelper(TestAirbrake):
 
     def test_auto_logger_has_level(self):
         self.assertTrue(
-            self.logger.isEnabledFor(airbrake.handler.DEFAULT_LOGGING_LEVEL))
+            self.logger.isEnabledFor(logging.ERROR))
 
     def test_auto_logger_given_name(self):
         logger = airbrake.getLogger(
             'my_module', api_key='fakekey', project_id='fakeprojectid')
         self.assertTrue(
-            logger.isEnabledFor(airbrake.handler.DEFAULT_LOGGING_LEVEL))
+            logger.isEnabledFor(logging.ERROR))
 
 
 class TestAirbrakeHandler(TestAirbrake):
 
-    @log_capture(level=airbrake.handler.DEFAULT_LOGGING_LEVEL)
+    @log_capture(level=logging.ERROR)
     def do_some_logs(self, l):
         self.logger.info("Should ignore this by default.")
         self.logger.error(self.logmsg)
@@ -73,8 +75,8 @@ class TestAirbrakeHandler(TestAirbrake):
     def test_log_captures(self):
         captured = self.do_some_logs()
         captured.check(
-            (airbrake.DEFAULT_LOGGER_PREFIX + __name__,
-             logging._levelNames[airbrake.handler.DEFAULT_LOGGING_LEVEL],
+            ('airbrake-python-' + __name__,
+             logging._levelNames[logging.ERROR],
              self.logmsg))
 
     def test_exception(self):
