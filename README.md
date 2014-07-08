@@ -25,7 +25,7 @@ $ pip install -U airbrake
 ```
 
 ###setup
-The easiest way to get setup is with a few environment variables:
+The easiest way to get set up is with a few environment variables:
 ```bash
 export AIRBRAKE_API_KEY=*****
 export AIRBRAKE_PROJECT_ID=12345
@@ -46,7 +46,18 @@ except Exception:
     logger.exception("Bad math.")
 ```
 
-####give your exceptions more context
+####adding the AirbrakeHandler to your existing logger
+```python
+import logging
+
+import airbrake
+
+yourlogger = logging.getLogger(__name__)
+yourlogger.addHandler(airbrake.AirbrakeHandler())
+```
+_by default, the `AirbrakeHandler` only handles logs level ERROR (40) and above_
+
+####giving your exceptions more context
 ```python
 import airbrake
 
