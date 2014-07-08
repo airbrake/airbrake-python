@@ -61,15 +61,6 @@ class Airbrake(object):
         self.environment = str(environment)
         self.project_id = str(project_id)
         self.api_key = str(api_key)
-        self.errors = []
-        self.payload_params = {}
-        self.payload_session = {}
-        self.payload = {'context': self.context,
-                        'params': self.payload_params,
-                        'errors': self.errors,
-                        'notifier': self.notifier,
-                        'environment': {},
-                        'session': self.payload_session}
 
         if not all((self.project_id, self.api_key)):
             raise TypeError("Airbrake API Key (api_key) and Project ID "
@@ -147,16 +138,19 @@ class Airbrake(object):
 
             exc_info = sys.exc_info()
 
-        self.payload_params.update(params)
-
         error = Error(
             exc_info=exc_info, message=message, filename=filename,
             line=line, function=function, errtype=errtype)
-        self.errors.append(error.data)
+        payload = {'context': self.context,
+                   'params': params,
+                   'errors': [error.data],
+                   'notifier': self.notifier,
+                   'environment': {},
+                   'session': {}}
 
-        return self.notify()
+        return self.notify(payload)
 
-    def notify(self):
+    def notify(self, payload):
         """Post the current errors payload body to airbrake.io.
 
         Resets the errors list in self.errors
@@ -167,17 +161,11 @@ class Airbrake(object):
         if not self.errors:
             return
 
-        response = requests.post(self.api_url, data=json.dumps(self.payload),
+        response = requests.post(self.api_url, data=json.dumps(payload),
                                  headers=headers, params=api_key)
         response.raise_for_status()
-        self._reset()
-        return response
-
-    def _reset(self):
-        del self.errors[:]
-        self.payload_params.clear()
-        self.payload_session.clear()
         sys.exc_clear()
+        return response
 
     def deploy(self, env=None):
 
@@ -188,7 +176,7 @@ class Airbrake(object):
 
         response = requests.post(self.deploy_url, params=params)
         response.raise_for_status()
-        return response.status_code
+        return response
 
 
 class Error(object):
