@@ -12,10 +12,11 @@ import sys
 
 from airbrake import Airbrake
 
-DEFAULT_LOGGING_LEVEL = logging.ERROR
-FAKE_LOGRECORD = logging.LogRecord(*8*('',))
+_fake_logrecord = logging.LogRecord('', '', '', '', '', '', '', '')
+
 
 class AirbrakeHandler(logging.Handler):
+
     """
     A handler class which ships logs to airbrake.io
 
@@ -23,7 +24,8 @@ class AirbrakeHandler(logging.Handler):
         * `project_id` AND `api_key`
         * an instance of airbrake.Airbrake
     """
-    def __init__(self, airbrake=None, level=DEFAULT_LOGGING_LEVEL, **kwargs):
+
+    def __init__(self, airbrake=None, level=logging.ERROR, **kwargs):
         """Initialize the Airbrake handler with a default logging level.
 
         Default level of logs handled by this class are >= ERROR,
@@ -50,6 +52,7 @@ class AirbrakeHandler(logging.Handler):
         except:
             self.handleError(record)
 
+
 def airbrake_error_from_logrecord(record):
     """Create an airbrake error dictionary from a python LogRecord object.
 
@@ -69,7 +72,7 @@ def airbrake_error_from_logrecord(record):
 
     # find params from kwarg 'extra'
     for key, val in vars(record).items():
-        if not hasattr(FAKE_LOGRECORD, key):
+        if not hasattr(_fake_logrecord, key):
             params[key] = val
 
     if sys.exc_info()[1]:

@@ -21,9 +21,8 @@ from airbrake import utils
 from airbrake.notifier import Airbrake
 from airbrake.handler import AirbrakeHandler
 
-DEFAULT_LOGGER_PREFIX = "airbrake-python-"
-
 logging.basicConfig()
+
 
 def getLogger(name=None, **kwargs):
 
@@ -32,7 +31,7 @@ def getLogger(name=None, **kwargs):
         callingpath = inspect.getouterframes(curframe, 2)[1][1]
         name = os.path.split(
             callingpath.rpartition('.')[0] or callingpath)[-1]
-        name = "%s%s" % (DEFAULT_LOGGER_PREFIX, name)
+        name = "%s%s" % ('airbrake-python-', name)
     logger = logging.getLogger(name)
     ab = AirbrakeHandler(**kwargs)
     logger.addHandler(ab)
@@ -41,4 +40,3 @@ def getLogger(name=None, **kwargs):
     elif not logger.isEnabledFor(ab.level):
         logger.setLevel(ab.level)
     return logger
-

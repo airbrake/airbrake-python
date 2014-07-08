@@ -153,13 +153,10 @@ class Airbrake(object):
     def notify(self, payload):
         """Post the current errors payload body to airbrake.io.
 
-        Resets the errors list in self.errors
+        Clears the exception context after posting.
         """
         headers = {'Content-Type': 'application/json'}
         api_key = {'key': self.api_key}
-
-        if not self.errors:
-            return
 
         response = requests.post(self.api_url, data=json.dumps(payload),
                                  headers=headers, params=api_key)
