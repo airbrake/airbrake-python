@@ -1,3 +1,4 @@
+"""Util functions/classes for airbrake-python."""
 import Queue
 import traceback
 import types
@@ -26,17 +27,23 @@ class CheckableQueue(Queue.Queue):
 
 
 def is_exc_info_tuple(exc_info):
+    """Determine whether 'exc_info' is an exc_info tuple.
+
+    Note: exc_info tuple means a tuple of exception related values
+    as returned by sys.exc_info().
+    """
     try:
-        errtype, value, tb = exc_info
+        errtype, value, tback = exc_info
         if all(map(lambda x: x is None, exc_info)):
             return True
         elif all((isinstance(errtype, types.TypeType),
                   isinstance(value, Exception),
-                  isinstance(tb, types.TracebackType))):
+                  isinstance(tback, types.TracebackType))):
             return True
     except (TypeError, ValueError):
         pass
     return False
+
 
 def pytb_lastline(excinfo=None):
     """Return the actual last line of the (current) traceback.

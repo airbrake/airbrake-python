@@ -8,11 +8,10 @@ A function for mapping a LogRecord object
 to an Airbrake error should be included here.
 """
 import logging
-import sys
 
 from airbrake import Airbrake
 
-_fake_logrecord = logging.LogRecord('', '', '', '', '', '', '', '')
+_FAKE_LOGRECORD = logging.LogRecord('', '', '', '', '', '', '', '')
 
 
 class AirbrakeHandler(logging.Handler):
@@ -95,7 +94,7 @@ def airbrake_error_from_logrecord(record):
     # See "The second keyword argument is extra"
     #   - https://docs.python.org/2/library/logging.html#logging.Logger.debug
     for key, val in vars(record).items():
-        if not hasattr(_fake_logrecord, key):
+        if not hasattr(_FAKE_LOGRECORD, key):
             # handle attribute/field name collisions:
             # logrecod attrs should not limit or take
             # precedence over values specified in 'extra'

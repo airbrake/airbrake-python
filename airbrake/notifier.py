@@ -9,8 +9,6 @@ import platform
 import socket
 import sys
 import traceback
-import urlparse
-import warnings
 
 import requests
 
@@ -44,7 +42,7 @@ class Airbrake(object):
 
     def __init__(self, project_id=None, api_key=None, environment=None):
 
-        #properties
+        # properties
         self._api_url = None
         self._context = None
         self.deploy_url = "http://api.airbrake.io/deploys.txt"
@@ -99,9 +97,8 @@ class Airbrake(object):
     def api_url(self):
         """Create the airbrake api endpoint and return a string."""
         if not self._api_url:
-            self._api_url = (
-                 "https://airbrake.io/api/v3/projects/%s/notices"
-                  % self.project_id)
+            self._api_url = ("https://airbrake.io/api/v3/projects/%s/notices"
+                             % self.project_id)
         return self._api_url
 
     def log(self, exc_info=None, message=None, filename=None,
@@ -192,7 +189,7 @@ class Airbrake(object):
         return response
 
     def deploy(self, env=None):
-
+        """Reset counted errors for the airbrake project/environment."""
         environment = env or self.environment
 
         params = {'api_key': self.api_key,
@@ -215,7 +212,7 @@ class Error(object):
 
         self.exc_info = exc_info
 
-        #default datastructure
+        # default datastructure
         self.data = {
             'type': errtype or "Record",
             'backtrace': [{'file': filename or "N/A",
