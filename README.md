@@ -3,104 +3,72 @@ airbrake-python
 
 <img src="http://f.cl.ly/items/3Z1A202C1U2j3E1O1N0n/python%2009.19.32.jpg" width=800px>
 
-Python library to export errors and exceptions to [airbrake.io](https://airbrake.io/)
+[Airbrake](https://airbrake.io/) integration for python that quickly and easily plugs into your existing code.
+
+```python
+import airbrake
+
+logger = airbrake.getLogger()
+
+try:
+    1/0
+except Exception:
+    logger.exception("Bad math.")
+
+```
+airbrake-python is used most effectively through its [logging](http://docs.python.org/2/library/logging.html) handler, and uses the [Airbrake V3 API](https://help.airbrake.io/kb/api-2/notifier-api-v3) for error reporting.
+
+###install
+To install airbrake-python, run:
+```bash
+$ pip install -U airbrake
+```
+
+###setup
+The easiest way to get set up is with a few environment variables:
+```bash
+export AIRBRAKE_API_KEY=*****
+export AIRBRAKE_PROJECT_ID=12345
+export AIRBRAKE_ENVIRONMENT=dev
+```
+and you're done!  
 
 
-As a [logging](http://docs.python.org/2/library/logging.html) handler
------------------------------------
+Otherwise, you can instantiate your `AirbrakeHandler` by passing these values as arguments to the `getLogger()` helper:
+```python
+import airbrake
 
-Auto-notify is enabled by default:
+logger = airbrake.getLogger(api_key=*****, project_id=12345)
 
+try:
+    1/0
+except Exception:
+    logger.exception("Bad math.")
+```
+
+####adding the AirbrakeHandler to your existing logger
 ```python
 import logging
-import os
 
-from airbrake.handler import AirbrakeHandler
+import airbrake
 
-
-pid = os.environ['AIRBRAKE_PROJECT_ID']
-apikey = os.environ['AIRBRAKE_API_KEY']
-
-logger = logging.getLogger(__name__)
-ab = AirbrakeHandler(pid, apikey, "readmenv")
-ab.setLevel(logging.DEBUG)
-logger.addHandler(ab)
-logger.setLevel(logging.DEBUG)
-
-# ab.airbrake.deploy()  # resolves errors
-
-try:
-    1/0
-except Exception as exc:
-    logger.exception(exc)
-         
+yourlogger = logging.getLogger(__name__)
+yourlogger.addHandler(airbrake.AirbrakeHandler())
 ```
+_by default, the `AirbrakeHandler` only handles logs level ERROR (40) and above_
 
-Or just use the module directly
-------------
+####giving your exceptions more context
 ```python
-import os
+import airbrake
 
-from airbrake.airbrake import Airbrake
+logger = airbrake.getLogger()
 
-
-pid = os.environ['AIRBRAKE_PROJECT_ID']
-apikey = os.environ['AIRBRAKE_API_KEY']
-
-ab = Airbrake(pid, apikey, "readmenv")
-
-try:
-    interesting = {'field': 'TODO(sam): put better info here.',
-                   'git_blame': 'N/A',
-                   'netloc': 'http://app.example.com'}
-    1/0
-except Exception as exc:
-    ab.log(exc, params=interesting)
+def bake(**goods):
+    try:
+        temp = goods['temperature']
+    except KeyError as exc:
+        logger.error("No temperature defined!", extra=goods)
 ```
-
-
-
-If auto-notify is disabled:
-
-```python
-import os
-
-from airbrake.airbrake import Airbrake
-
-
-pid = os.environ['AIRBRAKE_PROJECT_ID']
-apikey = os.environ['AIRBRAKE_API_KEY']
-
-ab = Airbrake(pid, apikey, "readmenv", auto_notify=False)
-
-try:
-    interesting = {'field': 'TODO(sam): put better info here.',
-                   'git_blame': 'N/A',
-                   'netloc': 'http://app.example.com'}
-    1/0
-except Exception as exc:
-    ab.log(exc, params=interesting)
-
-# more code, possible errors
-
-ab.notify()
-```
-
-##### The params we passed to `ab.log()` end up here:  
-
-![params](https://raw.github.com/smlstvnh/airbrake-python/master/data/airbrake_params.png)
-
-
--------
-
-
-The above are decent enough examples, but you'll probably want to  
-include a `notifier` dictionary upon instantiating the `Airbrake` class.
-
-* `notifier`
-  * The notifier client object.
-  * Describes the notifier client submitting the request.
-  * Should contain `name`, `version`, and `url`. type: `dict`
 
 -----------------
 
