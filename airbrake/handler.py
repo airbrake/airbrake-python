@@ -44,6 +44,25 @@ class AirbrakeHandler(logging.Handler):
             self.airbrake = Airbrake(**kwargs)
 
     def emit(self, record):
+        """Log the record airbrake.io style.
+
+        To prevent method calls which invoke this handler from using the
+        global exception context in sys.exc_info(), exc_info must be passed
+        as False.
+
+        E.g. To prevent AirbrakeHandler from reading the global exception
+        context, (which it may do to find a traceback and error type), make
+        logger method calls like this:
+
+            LOG.error("Bad math.", exc_info=False)
+
+        Otherwise, provide exception context directly, though the following
+        contrived example would be a strange way to use the handler:
+
+            exc_info = sys.exc_info()
+            ...
+            LOG.error("Bad math.", exc_info=exc_info)
+        """
         try:
             airbrakeerror = airbrake_error_from_logrecord(record)
             self.airbrake.log(**airbrakeerror)
@@ -61,6 +80,8 @@ def airbrake_error_from_logrecord(record):
     """
     airbrakeerror = {}
     params = {
+        'logrecord_filename': record.filename,
+        'levelname': record.levelname,
         'created': record.created,  # TODO(samstav): make this human readable
         'process_id': record.process,
         'process_name': record.processName,
@@ -71,18 +92,23 @@ def airbrake_error_from_logrecord(record):
         'msg': record.getMessage()}
 
     # find params from kwarg 'extra'
+    # See "The second keyword argument is extra"
+    #   - https://docs.python.org/2/library/logging.html#logging.Logger.debug
     for key, val in vars(record).items():
         if not hasattr(_fake_logrecord, key):
+            # handle attribute/field name collisions:
+            # logrecod attrs should not limit or take
+            # precedence over values specified in 'extra'
+            if key in params:
+                # if key "already" in params -> is logrecord attr
+                params["logrecord_" + key] = params.pop(key)
+            # let 'extra' (explicit) take precedence
             params[key] = val
 
-    if sys.exc_info()[1]:
-        airbrakeerror['errtype'] = sys.exc_info()[1].__class__.__name__
-    else:
-        # set the errtype even if there's no current exception stackframe
-        airbrakeerror['errtype'] = "%s:%s" % (record.levelname,
-                                              record.filename)
-
     airbrakeerror.update(params)
+    # errtype may be overridden by the notifier if an applicable
+    # exception context is available and exc_info is not False
+    airbrakeerror['errtype'] = "%s:%s" % (record.levelname, record.filename)
     airbrakeerror['exc_info'] = record.exc_info
     airbrakeerror['message'] = record.getMessage()
     airbrakeerror['filename'] = record.pathname
