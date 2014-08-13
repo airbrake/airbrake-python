@@ -2,9 +2,17 @@ import sys
 
 import airbrake
 
+def find_ab_handler(logger):
+    """Return the AirbrakeHandler from logger's handlers."""
+    for handler in logger.handlers:
+        if isinstance(handler, airbrake.AirbrakeHandler):
+            return handler
+
 
 def run_test():
     logger = airbrake.getLogger(environment='airbrake-python-test')
+    abhandler = find_ab_handler(logger)
+    # abhandler.airbrake.deploy()
 
     try:
         1/0
@@ -19,9 +27,7 @@ def run_test():
 
     logger.error("No exception, but something to be concerned about.")
 
-    for handler in logger.handlers:
-        if isinstance(handler, airbrake.AirbrakeHandler):
-            abhandler = handler
+    abhandler = find_ab_handler(logger)
     response = abhandler.airbrake.log(message='Finishing real test.')
     response.raise_for_status()
 
