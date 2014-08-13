@@ -69,6 +69,8 @@ class Airbrake(object):
                             "AIRBRAKE_API_KEY and AIRBRAKE_PROJECT_ID or "
                             "by passing in the arguments explicitly.")
 
+        self._exc_queue = utils.CheckableQueue()
+
     def __repr__(self):
         return ("Airbrake(project_id=%s, api_key=*****, environment=%s)"
                 % (self.project_id, self.environment))
@@ -107,6 +109,9 @@ class Airbrake(object):
         """Acknowledge an error and post it to airbrake.io.
 
         :param exc_info:    Exception tuple to use for formatting request.
+                            If None, sys.exc_info() will be read to get
+                            exception info. To prevent the reading of
+                            sys.exc_info(), set exc_info to False.
         :param message:     Message accompanying error.
         :param filename:    Name of file where error occurred.
         :param line:        Line number in file where error occurred.
@@ -114,6 +119,9 @@ class Airbrake(object):
         :param errtype:     Type of error which occurred.
         :param params:      Payload field "params" which may contain any other
                             context related to the exception(s).
+
+        Exception info willl be read from sys.exc_info() if it is not
+        supplied. To prevent this behavior, pass exc_info=False.
         """
 
         if not utils.is_exc_info_tuple(exc_info):
@@ -136,7 +144,30 @@ class Airbrake(object):
             elif errmessage:
                 message = errmessage
 
-            exc_info = sys.exc_info()
+            # read the global exception stack, but
+            # be sure not to read the same exception twice.
+            # This can happen for a number of reasons:
+            #   - the exception context has not been
+            #     cleared or garbage collected
+            #   - the airbrake logging handler is being used
+            #     to log exceptions and error messages in the same
+            #     thread, but that thread is not actually logging
+            #     some exceptions, or is not clearing the exception
+            #     context via sys.exc_clear()
+            # the alternative is to clear the exception stack every time,
+            # which this module *should not* take the liberty to do
+            #
+            # to prevent this function from reading the global
+            # exception context *at all*, pass exc_info=False
+            if exc_info is False:
+                exc_info = None, None, None
+            else:
+                exc_info = sys.exc_info()
+
+        # dont ship the same exception instance twice
+        if exc_info[1] in self._exc_queue:
+            exc_info = None, None, None
+        self._exc_queue.put(exc_info[1])
 
         error = Error(
             exc_info=exc_info, message=message, filename=filename,
@@ -151,17 +182,13 @@ class Airbrake(object):
         return self.notify(payload)
 
     def notify(self, payload):
-        """Post the current errors payload body to airbrake.io.
-
-        Clears the exception context after posting.
-        """
+        """Post the current errors payload body to airbrake.io."""
         headers = {'Content-Type': 'application/json'}
         api_key = {'key': self.api_key}
 
         response = requests.post(self.api_url, data=json.dumps(payload),
                                  headers=headers, params=api_key)
         response.raise_for_status()
-        sys.exc_clear()
         return response
 
     def deploy(self, env=None):
@@ -177,12 +204,10 @@ class Airbrake(object):
 
 
 class Error(object):
-    """Format the exception according to what is expected by airbrake.io.
+    """Format the exception according to airbrake.io v3 API.
 
     The airbrake.io docs used to implements this class are here:
         http://help.airbrake.io/kb/api-2/notifier-api-v3
-
-    If the global sys.exc_info is to be read/used, it should be done here.
     """
 
     def __init__(self, exc_info=None, message=None, filename=None,

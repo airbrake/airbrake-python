@@ -1,5 +1,28 @@
+import Queue
 import traceback
 import types
+
+
+class CheckableQueue(Queue.Queue):
+
+    """Checkable FIFO Queue which makes room for new items."""
+
+    def __init__(self, maxsize=1000):
+        Queue.Queue.__init__(self, maxsize=maxsize)
+
+    def __contains__(self, item):
+        with self.mutex:
+            return item in self.queue
+
+    def put(self, item, block=False, timeout=1):
+        try:
+            Queue.Queue.put(self, item, block=block, timeout=timeout)
+        except Queue.Full:
+            try:
+                self.get_nowait()
+            except Queue.Empty:
+                pass
+            self.put(item)
 
 
 def is_exc_info_tuple(exc_info):
