@@ -12,7 +12,10 @@ class CheckableQueue(Queue.Queue):
         Queue.Queue.__init__(self, maxsize=maxsize)
 
     def __contains__(self, item):
-        with self.mutex:
+        try:
+            with self.mutex:
+                return item in self.queue
+        except AttributeError:
             return item in self.queue
 
     def put(self, item, block=False, timeout=1):
