@@ -5,7 +5,7 @@
     Client for sending python exceptions to airbrake.io
 """
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 __url__ = "https://github.com/airbrake/airbrake-python"
 _notifier = {
     'name': 'airbrake-python',
