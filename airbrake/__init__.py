@@ -35,7 +35,7 @@ def getLogger(name=None, **kwargs):
     logger = logging.getLogger(name)
     ab = AirbrakeHandler(**kwargs)
     logger.addHandler(ab)
-    if logger.level == logging.NOTSET:
+    if logger.getEffectiveLevel() == logging.NOTSET:
         logger.setLevel(ab.level)
     elif not logger.isEnabledFor(ab.level):
         logger.setLevel(ab.level)
