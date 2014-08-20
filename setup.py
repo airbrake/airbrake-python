@@ -1,7 +1,19 @@
+import re
+import ast
 from setuptools import setup, find_packages
 
-from airbrake import __version__ as version
-from airbrake import __url__ as url
+
+_version_re = re.compile(r'__version__\s+=\s+(.*)')
+_url_re = re.compile(r'__url__\s+=\s+(.*)')
+
+
+with open('airbrake/__init__.py', 'rb') as f:
+    f = f.read()
+    version = str(ast.literal_eval(_version_re.search(
+        f.decode('utf-8')).group(1)))
+    url = str(ast.literal_eval(_url_re.search(
+        f.decode('utf-8')).group(1)))
+
 
 dependencies = [
     'requests>=2.2.1'
