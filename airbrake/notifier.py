@@ -169,12 +169,14 @@ class Airbrake(object):
         error = Error(
             exc_info=exc_info, message=message, filename=filename,
             line=line, function=function, errtype=errtype)
+        environment = params.pop('environment', {})
+        session = params.pop('session', {})
         payload = {'context': self.context,
                    'params': params,
                    'errors': [error.data],
                    'notifier': self.notifier,
-                   'environment': {},
-                   'session': {}}
+                   'environment': environment,
+                   'session': session}
 
         return self.notify(payload)
 
