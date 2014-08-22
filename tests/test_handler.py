@@ -125,5 +125,20 @@ class TestAirbrakeHandler(TestAirbrakeHandlerBasic):
     def test_exception(self):
         self.log_in_exception_handler()
 
+
+class TestAirbrakeLoggerHandlers(TestAirbrake):
+
+    def test_one_logger(self):
+        logger = airbrake.getLogger(
+            api_key='fakekey', project_id='fakeprojectid')
+        self.assertEqual(1, len(logger.handlers))
+
+    def test_two_logger(self):
+        airbrake.getLogger(
+            api_key='fakekey', project_id='fakeprojectid')
+        logger = airbrake.getLogger(
+            api_key='fakekey', project_id='fakeprojectid')
+        self.assertEqual(1, len(logger.handlers))
+
 if __name__ == '__main__':
     unittest.main()
