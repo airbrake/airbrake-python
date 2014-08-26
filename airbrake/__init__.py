@@ -33,10 +33,18 @@ def getLogger(name=None, **kwargs):
             callingpath.rpartition('.')[0] or callingpath)[-1]
         name = "%s%s" % ('airbrake-python-', name)
     logger = logging.getLogger(name)
-    ab = AirbrakeHandler(**kwargs)
-    logger.addHandler(ab)
-    if logger.getEffectiveLevel() == logging.NOTSET:
-        logger.setLevel(ab.level)
-    elif not logger.isEnabledFor(ab.level):
-        logger.setLevel(ab.level)
+
+    if not has_airbrake_handler(logger):
+        ab = AirbrakeHandler(**kwargs)
+        logger.addHandler(ab)
+        if logger.getEffectiveLevel() == logging.NOTSET:
+            logger.setLevel(ab.level)
+        elif not logger.isEnabledFor(ab.level):
+            logger.setLevel(ab.level)
+
     return logger
+
+
+def has_airbrake_handler(logger):
+    return any([isinstance(handler, AirbrakeHandler)
+                for handler in logger.handlers])
