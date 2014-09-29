@@ -229,7 +229,7 @@ class Error(object):
             self.data.update(
                 {'type': self.exc_info[1].__class__.__name__,
                  'backtrace': format_backtrace(self.exc_info[2]),
-                 'message': tbmessage})
+                 'message': message or tbmessage})
         else:
             raise TypeError(
                 "Airbrake module (notifier.Error) received "
