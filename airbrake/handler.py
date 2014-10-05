@@ -93,7 +93,7 @@ def airbrake_error_from_logrecord(record):
     # find params from kwarg 'extra'
     # See "The second keyword argument is extra"
     #   - https://docs.python.org/2/library/logging.html#logging.Logger.debug
-    for key, val in list(vars(record).items()):
+    for key, val in vars(record).items():
         if not hasattr(_FAKE_LOGRECORD, key):
             # handle attribute/field name collisions:
             # logrecod attrs should not limit or take

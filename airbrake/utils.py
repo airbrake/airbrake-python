@@ -7,13 +7,7 @@ except ImportError:
 
 import traceback
 import types
-import sys
 
-if sys.version_info < (3,):
-    #Py2 legacy fix
-    type_of_type = types.TypeType
-else:
-    type_of_type = type
 
 class CheckableQueue(Queue):
 
@@ -48,9 +42,9 @@ def is_exc_info_tuple(exc_info):
     """
     try:
         errtype, value, tback = exc_info
-        if all([x is None for x in exc_info]):
+        if all(map(lambda x: x is None, exc_info)):
             return True
-        elif all((isinstance(errtype, type_of_type),
+        elif all((isinstance(errtype, types.TypeType),
                   isinstance(value, Exception),
                   isinstance(tback, types.TracebackType))):
             return True
@@ -98,6 +92,6 @@ def pytb_lastline(excinfo=None):
     # strip whitespace, Falsy values,
     # and the string 'None', sometimes returned by the traceback module
     lines = [line.strip() for line in lines if line]
-    lines = [line for line in lines if str(line).lower() != 'none']
+    lines = filter(lambda line: str(line).lower() != 'none', lines)
     if lines:
         return lines[-1]
