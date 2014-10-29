@@ -1,15 +1,26 @@
 """Util functions/classes for airbrake-python."""
-import Queue
+try:
+    from queue import Queue, Full, Empty
+except ImportError:
+    #Py2 legacy fix
+    from Queue import Queue, Full, Empty
+
 import traceback
 import types
+import sys
 
+if sys.version_info < (3,):
+    #Py2 legacy fix
+    type_of_type = types.TypeType
+else:
+    type_of_type = type
 
-class CheckableQueue(Queue.Queue):
+class CheckableQueue(Queue):
 
     """Checkable FIFO Queue which makes room for new items."""
 
     def __init__(self, maxsize=1000):
-        Queue.Queue.__init__(self, maxsize=maxsize)
+        Queue.__init__(self, maxsize=maxsize)
 
     def __contains__(self, item):
         try:
@@ -20,11 +31,11 @@ class CheckableQueue(Queue.Queue):
 
     def put(self, item, block=False, timeout=1):
         try:
-            Queue.Queue.put(self, item, block=block, timeout=timeout)
-        except Queue.Full:
+            Queue.put(self, item, block=block, timeout=timeout)
+        except Full:
             try:
                 self.get_nowait()
-            except Queue.Empty:
+            except Empty:
                 pass
             self.put(item)
 
@@ -37,9 +48,9 @@ def is_exc_info_tuple(exc_info):
     """
     try:
         errtype, value, tback = exc_info
-        if all(map(lambda x: x is None, exc_info)):
+        if all([x is None for x in exc_info]):
             return True
-        elif all((isinstance(errtype, types.TypeType),
+        elif all((isinstance(errtype, type_of_type),
                   isinstance(value, Exception),
                   isinstance(tback, types.TracebackType))):
             return True
@@ -87,6 +98,6 @@ def pytb_lastline(excinfo=None):
     # strip whitespace, Falsy values,
     # and the string 'None', sometimes returned by the traceback module
     lines = [line.strip() for line in lines if line]
-    lines = filter(lambda line: str(line).lower() != 'none', lines)
+    lines = [line for line in lines if str(line).lower() != 'none']
     if lines:
         return lines[-1]
