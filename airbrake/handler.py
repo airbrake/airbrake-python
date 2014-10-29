@@ -24,15 +24,12 @@ class AirbrakeHandler(logging.Handler):
         * an instance of airbrake.Airbrake
     """
 
-    def __init__(self, airbrake=None, level=logging.ERROR, **kwargs):
+    def __init__(self, airbrake=None, level=logging.ERROR, project_id=None, api_key=None, environment=None):
         """Initialize the Airbrake handler with a default logging level.
 
         Default level of logs handled by this class are >= ERROR,
         which includes ERROR and CRITICAL. To change this behavior
-        supply a different arguement for 'level'.
-
-        All 'kwargs' will be passed to notifier.Airbrake to instantiate
-        a notifier client.
+        supply a different argument for 'level'.
         """
 
         logging.Handler.__init__(self, level=level)
@@ -40,7 +37,7 @@ class AirbrakeHandler(logging.Handler):
         if isinstance(airbrake, Airbrake):
             self.airbrake = airbrake
         else:
-            self.airbrake = Airbrake(**kwargs)
+            self.airbrake = Airbrake(project_id, api_key, environment)
 
     def emit(self, record):
         """Log the record airbrake.io style.
