@@ -3,6 +3,7 @@
 Initialize this class to ship errors to airbrake.io
 using the log() method.
 """
+
 import json
 import os
 import platform
@@ -41,7 +42,7 @@ class Airbrake(object):
     """
 
     def __init__(self, project_id=None, api_key=None, environment=None):
-
+        """Client constructor."""
         # properties
         self._api_url = None
         self._context = None
@@ -70,12 +71,13 @@ class Airbrake(object):
         self._exc_queue = utils.CheckableQueue()
 
     def __repr__(self):
+        """Return value for the repr function."""
         return ("Airbrake(project_id=%s, api_key=*****, environment=%s)"
                 % (self.project_id, self.environment))
 
     @property
     def context(self):
-        """Contains the python, os, and app environment context."""
+        """The python, os, and app environment context."""
         if not self._context:
             self._context = {}
             # python
@@ -120,7 +122,6 @@ class Airbrake(object):
         Exception info willl be read from sys.exc_info() if it is not
         supplied. To prevent this behavior, pass exc_info=False.
         """
-
         if not utils.is_exc_info_tuple(exc_info):
             # compatibility, allows exc_info not to be a exc tuple
             errmessage = None
@@ -202,7 +203,7 @@ class Airbrake(object):
         return response
 
 
-class Error(object):
+class Error(object):  # pylint: disable=too-few-public-methods
     """Format the exception according to airbrake.io v3 API.
 
     The airbrake.io docs used to implements this class are here:
@@ -211,7 +212,7 @@ class Error(object):
 
     def __init__(self, exc_info=None, message=None, filename=None,
                  line=None, function=None, errtype=None):
-
+        """Error object constructor."""
         self.exc_info = exc_info
 
         # default datastructure

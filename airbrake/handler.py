@@ -15,16 +15,15 @@ _FAKE_LOGRECORD = logging.LogRecord('', '', '', '', '', '', '', '')
 
 
 class AirbrakeHandler(logging.Handler):
-
-    """
-    A handler class which ships logs to airbrake.io
+    """A handler class which ships logs to airbrake.io.
 
     Requires one:
         * `project_id` AND `api_key`
         * an instance of airbrake.Airbrake
     """
 
-    def __init__(self, airbrake=None, level=logging.ERROR, project_id=None, api_key=None, environment=None):
+    def __init__(self, airbrake=None, level=logging.ERROR, project_id=None,
+                 api_key=None, environment=None):
         """Initialize the Airbrake handler with a default logging level.
 
         Default level of logs handled by this class are >= ERROR,
@@ -64,7 +63,7 @@ class AirbrakeHandler(logging.Handler):
             self.airbrake.log(**airbrakeerror)
         except (KeyboardInterrupt, SystemExit):
             raise
-        except:
+        except:  # pylint: disable=bare-except
             self.handleError(record)
 
 

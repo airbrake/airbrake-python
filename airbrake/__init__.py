@@ -16,8 +16,8 @@ from airbrake.handler import AirbrakeHandler  # noqa
 logging.basicConfig()
 
 
-def getLogger(name=None, **kwargs):
-
+def getLogger(name=None, **kwargs):  # pylint: disable=invalid-name
+    """Return a Logger with an AirbrakeHandler."""
     if not name:
         curframe = inspect.currentframe()
         callingpath = inspect.getouterframes(curframe, 2)[1][1]
@@ -27,16 +27,17 @@ def getLogger(name=None, **kwargs):
     logger = logging.getLogger(name)
 
     if not has_airbrake_handler(logger):
-        ab = AirbrakeHandler(**kwargs)
-        logger.addHandler(ab)
+        abh = AirbrakeHandler(**kwargs)
+        logger.addHandler(abh)
         if logger.getEffectiveLevel() == logging.NOTSET:
-            logger.setLevel(ab.level)
-        elif not logger.isEnabledFor(ab.level):
-            logger.setLevel(ab.level)
+            logger.setLevel(abh.level)
+        elif not logger.isEnabledFor(abh.level):
+            logger.setLevel(abh.level)
 
     return logger
 
 
 def has_airbrake_handler(logger):
+    """Check a logger for an AirbrakeHandler."""
     return any([isinstance(handler, AirbrakeHandler)
                 for handler in logger.handlers])
