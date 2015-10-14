@@ -12,7 +12,7 @@ import traceback
 
 import requests
 
-from airbrake import _notifier as airbrake_python_notifier
+from airbrake.__about__ import __notifier__
 from airbrake import utils
 
 
@@ -46,7 +46,7 @@ class Airbrake(object):
         self._api_url = None
         self._context = None
         self.deploy_url = "http://api.airbrake.io/deploys.txt"
-        self.notifier = airbrake_python_notifier
+        self.notifier = __notifier__
 
         if not environment:
             environment = (os.getenv('AIRBRAKE_ENVIRONMENT') or

@@ -1,25 +1,17 @@
-"""
-    airbrake-python
-    ~~~~~~~~~~~~~~~
+"""airbrake-python.
 
-    Client for sending python exceptions to airbrake.io
+Python SDK for airbrake.io
 """
 
-__version__ = "1.1.3"
-__url__ = "https://github.com/airbrake/airbrake-python"
-_notifier = {
-    'name': 'airbrake-python',
-    'version': __version__,
-    'url': __url__
-}
+# pylint: disable=wildcard-import
 
 import inspect
 import logging
 import os
 
-from airbrake import utils
-from airbrake.notifier import Airbrake
-from airbrake.handler import AirbrakeHandler
+from airbrake.__about__ import *  # noqa
+from airbrake.notifier import Airbrake  # noqa
+from airbrake.handler import AirbrakeHandler  # noqa
 
 logging.basicConfig()
 

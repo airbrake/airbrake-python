@@ -9,7 +9,7 @@ to an Airbrake error should be included here.
 """
 import logging
 
-from airbrake import Airbrake
+from airbrake.notifier import Airbrake
 
 _FAKE_LOGRECORD = logging.LogRecord('', '', '', '', '', '', '', '')
 
