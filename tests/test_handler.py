@@ -6,6 +6,7 @@ import mock
 from testfixtures import log_capture
 
 import airbrake
+from airbrake import exc as ab_exc
 
 BRAKE_LEVEL = 90
 logging.addLevelName(BRAKE_LEVEL, "BRAKE")
@@ -43,11 +44,17 @@ class TestAirbrakeHandlerBasic(TestAirbrake):
     def test_throws_missing_values(self):
         os.environ['AIRBRAKE_PROJECT_ID'] = ''
         os.environ['AIRBRAKE_API_KEY'] = ''
-        self.assertRaises(TypeError, airbrake.getLogger)
+        self.assertRaises(ab_exc.AirbrakeNotConfigured, airbrake.getLogger)
         self.assertRaises(
-            TypeError, airbrake.getLogger, project_id='fakeprojectid')
+            ab_exc.AirbrakeNotConfigured,
+            airbrake.getLogger,
+            project_id='fakeprojectid'
+        )
         self.assertRaises(
-            TypeError, airbrake.getLogger, api_key='fakeapikey')
+            ab_exc.AirbrakeNotConfigured,
+            airbrake.getLogger,
+            api_key='fakeapikey'
+        )
 
 
 class TestCustomLogLevel(TestAirbrake):

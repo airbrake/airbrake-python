@@ -10,6 +10,7 @@ import logging
 import os
 
 from airbrake.__about__ import *  # noqa
+from airbrake import exc  # noqa
 from airbrake.notifier import Airbrake  # noqa
 from airbrake.handler import AirbrakeHandler  # noqa
 

@@ -14,6 +14,7 @@ import traceback
 import requests
 
 from airbrake.__about__ import __notifier__
+from airbrake import exc as ab_exc
 from airbrake import utils
 
 
@@ -62,11 +63,13 @@ class Airbrake(object):
         self.api_key = str(api_key)
 
         if not all((self.project_id, self.api_key)):
-            raise TypeError("Airbrake API Key (api_key) and Project ID "
-                            "(project_id) must be set. These values "
-                            "may be set using the environment variables "
-                            "AIRBRAKE_API_KEY and AIRBRAKE_PROJECT_ID or "
-                            "by passing in the arguments explicitly.")
+            raise ab_exc.AirbrakeNotConfigured(
+                "Airbrake API Key (api_key) and Project ID "
+                "(project_id) must be set. These values "
+                "may be set using the environment variables "
+                "AIRBRAKE_API_KEY and AIRBRAKE_PROJECT_ID or "
+                "by passing in the arguments explicitly."
+            )
 
         self._exc_queue = utils.CheckableQueue()
 
