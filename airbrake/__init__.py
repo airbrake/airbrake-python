@@ -14,8 +14,6 @@ from airbrake import exc  # noqa
 from airbrake.notifier import Airbrake  # noqa
 from airbrake.handler import AirbrakeHandler  # noqa
 
-logging.basicConfig()
-
 
 def getLogger(name=None, **kwargs):  # pylint: disable=invalid-name
     """Return a Logger with an AirbrakeHandler."""
