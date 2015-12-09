@@ -1,6 +1,6 @@
-import sys
 
 import airbrake
+
 
 def find_ab_handler(logger):
     """Return the AirbrakeHandler from logger's handlers."""
@@ -10,20 +10,23 @@ def find_ab_handler(logger):
 
 
 def run_test():
+    """Run."""
     logger = airbrake.getLogger(environment='airbrake-python-test')
     abhandler = find_ab_handler(logger)
     # abhandler.airbrake.deploy()
 
     try:
-        1/0
+        1 / 0
     except ZeroDivisionError:
         logger.exception("Bad math.")
 
     try:
-        undefined
-    except Exception as err:
-        logger.exception("Undefined things!",
-            extra={'additional': 'context', 'key1': 'val1'})
+        undefined  # noqa
+    except Exception:
+        logger.exception(
+            "Undefined things!",
+            extra={'additional': 'context', 'key1': 'val1'}
+        )
 
     logger.error("No exception, but something to be concerned about.")
 

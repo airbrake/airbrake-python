@@ -3,6 +3,7 @@
 Initialize this class to ship errors to airbrake.io
 using the log() method.
 """
+
 import json
 import os
 import platform
@@ -12,7 +13,8 @@ import traceback
 
 import requests
 
-from airbrake import _notifier as airbrake_python_notifier
+from airbrake.__about__ import __notifier__
+from airbrake import exc as ab_exc
 from airbrake import utils
 
 
@@ -41,12 +43,12 @@ class Airbrake(object):
     """
 
     def __init__(self, project_id=None, api_key=None, environment=None):
-
+        """Client constructor."""
         # properties
         self._api_url = None
         self._context = None
         self.deploy_url = "http://api.airbrake.io/deploys.txt"
-        self.notifier = airbrake_python_notifier
+        self.notifier = __notifier__
 
         if not environment:
             environment = (os.getenv('AIRBRAKE_ENVIRONMENT') or
@@ -61,21 +63,24 @@ class Airbrake(object):
         self.api_key = str(api_key)
 
         if not all((self.project_id, self.api_key)):
-            raise TypeError("Airbrake API Key (api_key) and Project ID "
-                            "(project_id) must be set. These values "
-                            "may be set using the environment variables "
-                            "AIRBRAKE_API_KEY and AIRBRAKE_PROJECT_ID or "
-                            "by passing in the arguments explicitly.")
+            raise ab_exc.AirbrakeNotConfigured(
+                "Airbrake API Key (api_key) and Project ID "
+                "(project_id) must be set. These values "
+                "may be set using the environment variables "
+                "AIRBRAKE_API_KEY and AIRBRAKE_PROJECT_ID or "
+                "by passing in the arguments explicitly."
+            )
 
         self._exc_queue = utils.CheckableQueue()
 
     def __repr__(self):
+        """Return value for the repr function."""
         return ("Airbrake(project_id=%s, api_key=*****, environment=%s)"
                 % (self.project_id, self.environment))
 
     @property
     def context(self):
-        """Contains the python, os, and app environment context."""
+        """The python, os, and app environment context."""
         if not self._context:
             self._context = {}
             # python
@@ -120,7 +125,6 @@ class Airbrake(object):
         Exception info willl be read from sys.exc_info() if it is not
         supplied. To prevent this behavior, pass exc_info=False.
         """
-
         if not utils.is_exc_info_tuple(exc_info):
             # compatibility, allows exc_info not to be a exc tuple
             errmessage = None
@@ -202,7 +206,7 @@ class Airbrake(object):
         return response
 
 
-class Error(object):
+class Error(object):  # pylint: disable=too-few-public-methods
     """Format the exception according to airbrake.io v3 API.
 
     The airbrake.io docs used to implements this class are here:
@@ -211,7 +215,7 @@ class Error(object):
 
     def __init__(self, exc_info=None, message=None, filename=None,
                  line=None, function=None, errtype=None):
-
+        """Error object constructor."""
         self.exc_info = exc_info
 
         # default datastructure

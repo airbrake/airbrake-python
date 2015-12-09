@@ -1,28 +1,31 @@
 """Util functions/classes for airbrake-python."""
+
 try:
     from queue import Queue, Full, Empty
 except ImportError:
-    #Py2 legacy fix
+    # Py2 legacy fix
     from Queue import Queue, Full, Empty
 
 import traceback
 import types
-import sys
 
-if sys.version_info < (3,):
-    #Py2 legacy fix
-    type_of_type = types.TypeType
-else:
-    type_of_type = type
+try:
+    TypeType = types.TypeType
+except AttributeError:
+    # For >= Python 3
+    TypeType = type
+
 
 class CheckableQueue(Queue):
 
     """Checkable FIFO Queue which makes room for new items."""
 
     def __init__(self, maxsize=1000):
+        """Queue constructor."""
         Queue.__init__(self, maxsize=maxsize)
 
     def __contains__(self, item):
+        """Check the Queue for the existence of an item."""
         try:
             with self.mutex:
                 return item in self.queue
@@ -30,6 +33,7 @@ class CheckableQueue(Queue):
             return item in self.queue
 
     def put(self, item, block=False, timeout=1):
+        """Add an item to the Queue."""
         try:
             Queue.put(self, item, block=block, timeout=timeout)
         except Full:
@@ -50,7 +54,7 @@ def is_exc_info_tuple(exc_info):
         errtype, value, tback = exc_info
         if all([x is None for x in exc_info]):
             return True
-        elif all((isinstance(errtype, type_of_type),
+        elif all((isinstance(errtype, TypeType),
                   isinstance(value, Exception),
                   isinstance(tback, types.TracebackType))):
             return True

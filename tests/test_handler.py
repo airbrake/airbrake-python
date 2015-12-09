@@ -6,14 +6,19 @@ import mock
 from testfixtures import log_capture
 
 import airbrake
+from airbrake import exc as ab_exc
 
 BRAKE_LEVEL = 90
 logging.addLevelName(BRAKE_LEVEL, "BRAKE")
 
+
 def brake(self, message, *args, **kwargs):
+    """Airbrake logger method for tests."""
     if self.isEnabledFor(BRAKE_LEVEL):
         self._log(BRAKE_LEVEL, message, args, **kwargs)
+
 logging.Logger.brake = brake
+
 
 class TestAirbrake(unittest.TestCase):
 
@@ -39,11 +44,17 @@ class TestAirbrakeHandlerBasic(TestAirbrake):
     def test_throws_missing_values(self):
         os.environ['AIRBRAKE_PROJECT_ID'] = ''
         os.environ['AIRBRAKE_API_KEY'] = ''
-        self.assertRaises(TypeError, airbrake.getLogger)
+        self.assertRaises(ab_exc.AirbrakeNotConfigured, airbrake.getLogger)
         self.assertRaises(
-            TypeError, airbrake.getLogger, project_id='fakeprojectid')
+            ab_exc.AirbrakeNotConfigured,
+            airbrake.getLogger,
+            project_id='fakeprojectid'
+        )
         self.assertRaises(
-            TypeError, airbrake.getLogger, api_key='fakeapikey')
+            ab_exc.AirbrakeNotConfigured,
+            airbrake.getLogger,
+            api_key='fakeapikey'
+        )
 
 
 class TestCustomLogLevel(TestAirbrake):
@@ -57,8 +68,10 @@ class TestCustomLogLevel(TestAirbrake):
 
     def test_is_custom_level(self):
         self.abhandler = self.logger.handlers[0]
-        self.assertTrue(self.abhandler.level == BRAKE_LEVEL,
-            "%s is not %s" % (self.abhandler.level, BRAKE_LEVEL))
+        self.assertTrue(
+            self.abhandler.level == BRAKE_LEVEL,
+            "%s is not %s" % (self.abhandler.level, BRAKE_LEVEL)
+        )
 
     def test_emit_call_count(self):
         self.abhandler = self.logger.handlers[0]
@@ -68,11 +81,11 @@ class TestCustomLogLevel(TestAirbrake):
 
     @log_capture(level=logging.INFO)
     def do_some_logs(self, l):
-        levels = [lvl for lvl in logging._levelNames.keys()
-                  if str(lvl).isdigit()]
+        levels = [0, 10, 20, 30, 40, 50, BRAKE_LEVEL]
         for level in levels:
             self.logger.log(level, "Hello.")
         return l
+
 
 class TestAirbrakeLoggerHelper(TestAirbrakeHandlerBasic):
 
@@ -105,13 +118,13 @@ class TestAirbrakeHandler(TestAirbrakeHandlerBasic):
 
     def log_in_exception_handler(self):
         try:
-            1/0
+            1 / 0
         except Exception:
             self.logger.exception("Hate when this happens.",
                                   extra={'this': 'wins'})
 
         try:
-            undefined
+            undefined  # noqa
         except Exception:
             self.logger.error("It's bad luck not to assign values.")
 
@@ -119,8 +132,9 @@ class TestAirbrakeHandler(TestAirbrakeHandlerBasic):
         captured = self.do_some_logs()
         captured.check(
             ('airbrake-python-' + __name__,
-             logging._levelNames[logging.ERROR],
-             self.logmsg))
+             logging.getLevelName(logging.ERROR),
+             self.logmsg)
+        )
 
     def test_exception(self):
         self.log_in_exception_handler()
