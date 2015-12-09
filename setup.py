@@ -1,10 +1,11 @@
 """Airbrake-Python packaging and installation."""
 
 import os
-from setuptools import find_packages
-from setuptools import setup
 import subprocess
 import sys
+
+from setuptools import find_packages
+from setuptools import setup
 
 
 src_dir = os.path.dirname(os.path.realpath(__file__))
