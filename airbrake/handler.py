@@ -36,7 +36,8 @@ class AirbrakeHandler(logging.Handler):
         if isinstance(airbrake, Airbrake):
             self.airbrake = airbrake
         else:
-            self.airbrake = Airbrake(project_id, api_key, environment, base_url)
+            self.airbrake = Airbrake(project_id, api_key, environment,
+                                     base_url)
 
     def emit(self, record):
         """Log the record airbrake.io style.
