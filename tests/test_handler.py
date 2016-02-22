@@ -94,7 +94,8 @@ class TestAirbrakeLoggerHelper(TestAirbrakeHandlerBasic):
             self.logger.name, 'airbrake-python-' + __name__)
 
     def test_auto_logger_has_airbrake_handler(self):
-        def isabhandler(x): return isinstance(x, airbrake.AirbrakeHandler)
+        def isabhandler(x):
+            return isinstance(x, airbrake.AirbrakeHandler)
         self.assertTrue(any(map(isabhandler, self.logger.handlers)))
 
     def test_auto_logger_has_level(self):
