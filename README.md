@@ -48,7 +48,7 @@ except Exception:
 
 ###setup for Airbrake alternatives (e.g. Errbit)
 
-There are self-hosted alternatives to Airbrake which provide a compatible API (e.g. Errbit).
+There are self-hosted alternatives to Airbrake which provide a compatible API (e.g. [Errbit](https://github.com/errbit/errbit)).
 
 You can configure a different endpoint than the default (`https://airbrake.io`) by either:
 
