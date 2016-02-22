@@ -42,7 +42,7 @@ class Airbrake(object):
         http://help.airbrake.io/kb/api-2/notifier-api-v3
     """
 
-    def __init__(self, project_id=None, api_key=None, environment=None):
+    def __init__(self, project_id=None, api_key=None, environment=None, base_url=None):
         """Client constructor."""
         # properties
         self._api_url = None
@@ -57,10 +57,13 @@ class Airbrake(object):
             project_id = os.getenv('AIRBRAKE_PROJECT_ID', '')
         if not api_key:
             api_key = os.getenv('AIRBRAKE_API_KEY', '')
+        if not base_url:
+            base_url = os.getenv('AIRBRAKE_BASE_URL', 'https://airbrake.io').strip('/')
 
         self.environment = str(environment)
         self.project_id = str(project_id)
         self.api_key = str(api_key)
+        self.base_url = str(base_url)
 
         if not all((self.project_id, self.api_key)):
             raise ab_exc.AirbrakeNotConfigured(
@@ -102,8 +105,7 @@ class Airbrake(object):
     def api_url(self):
         """Create the airbrake api endpoint and return a string."""
         if not self._api_url:
-            self._api_url = ("https://airbrake.io/api/v3/projects/%s/notices"
-                             % self.project_id)
+            self._api_url = "%s/api/v3/projects/%s/notices" % (self.base_url, self.project_id)
         return self._api_url
 
     def log(self, exc_info=None, message=None, filename=None,

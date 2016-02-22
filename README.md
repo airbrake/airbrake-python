@@ -46,6 +46,26 @@ except Exception:
     logger.exception("Bad math.")
 ```
 
+###setup for Airbrake alternatives (e.g. Errbit)
+
+There are self-hosted alternatives to Airbrake which provide a compatible API (e.g. Errbit).
+
+You can configure a different endpoint than the default (`https://airbrake.io`) by either:
+
+ * Setting an environment variable:
+ 
+```bash
+export AIRBRAKE_BASE_URL=https://self-hosted.errbit.example.com/
+```
+
+ * Or passing a `base_url` argument to the `getLogger()` helper:
+
+```python
+import airbrake
+
+logger = airbrake.getLogger(api_key=*****, project_id=12345, base_url="https://self-hosted.errbit.example.com/")
+```
+
 ####adding the AirbrakeHandler to your existing logger
 ```python
 import logging
