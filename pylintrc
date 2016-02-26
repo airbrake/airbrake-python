@@ -12,7 +12,7 @@ good-names=f,e,i,j,k,v,ex,_,x,y,z,kw
 # No camel case globals, max length 30
 const-rgx=(^([A-Za-z_](?!(([A-Z][a-z0-9]+)+))){2,30}$)
 max-args = 7
-max-attributes = 8
+max-attributes = 9
 
 [REPORTS]
 msg-template={msg_id}({symbol}): {path},{line}: {msg} | {obj}
