@@ -46,9 +46,9 @@ except Exception:
     logger.exception("Bad math.")
 ```
 
-###setup for Airbrake alternatives (e.g. Errbit)
+###setup for Airbrake On-Premise and other compatible back-ends (e.g. Errbit)
 
-There are self-hosted alternatives to Airbrake which provide a compatible API (e.g. [Errbit](https://github.com/errbit/errbit)).
+Airbrake [Enterprise](https://airbrake.io/enterprise) and self-hosted alternatives, such as [Errbit](https://github.com/errbit/errbit), provide a compatible API.
 
 You can configure a different endpoint than the default (`https://airbrake.io`) by either:
 
