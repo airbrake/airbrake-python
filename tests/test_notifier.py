@@ -1,16 +1,21 @@
 import airbrake
 import mock
 import unittest
+import json
+
 from airbrake.notifier import Airbrake
 
 
 class TestAirbrakeNotifier(unittest.TestCase):
 
-    def _create_notify(test, exception, session={}, environment={}):
+    def _create_notify(test, exception, session={}, environment={}, **params):
         def notify(self, payload):
+            payload = json.loads(payload)
             test.assertEqual(session, payload['session'])
             test.assertEqual(environment, payload['environment'])
             test.assertEqual(str(exception), payload['errors'][0]['message'])
+            for param_name, expected_value in params.items():
+                test.assertEqual(expected_value, payload['params'][param_name])
         return notify
 
     def setUp(self):
@@ -45,6 +50,21 @@ class TestAirbrakeNotifier(unittest.TestCase):
         notify = self._create_notify(msg, environment=self.environment)
         with mock.patch.object(Airbrake, 'notify', notify):
             extra = {'environment': self.environment}
+            self.logger.exception(Exception(msg), extra=extra)
+
+    def test_exception_with_non_serializable(self):
+        msg = "Narf!"
+
+        class NonSerializable:
+            def __repr__(self):
+                return '<Use this instead>'
+        non_serializable = NonSerializable()
+
+        notify = self._create_notify(msg,
+                                     very='important',
+                                     jsonify=repr(non_serializable))
+        with mock.patch.object(Airbrake, 'notify', notify, 'jsonify'):
+            extra = {'very': 'important', 'jsonify': non_serializable}
             self.logger.exception(Exception(msg), extra=extra)
 
 if __name__ == '__main__':
