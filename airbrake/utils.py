@@ -21,6 +21,8 @@ class FailProofJSONEncoder(json.JSONEncoder):
     """Uses object's representation for unsupported types."""
 
     def default(self, o):  # pylint: disable=E0202
+        # E0202 ignored in favor of compliance with documentation:
+        # https://docs.python.org/2/library/json.html#json.JSONEncoder.default
         """Return object's repr when not JSON serializable."""
         return repr(o)
 
