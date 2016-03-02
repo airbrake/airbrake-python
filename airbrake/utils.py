@@ -20,8 +20,7 @@ except AttributeError:
 class FailProofJSONEncoder(json.JSONEncoder):
     """Uses object's representation for unsupported types."""
 
-    # pylint: disable=E0202
-    def default(self, o):
+    def default(self, o):  # pylint: disable=E0202
         """Return object's repr when not JSON serializable."""
         return repr(o)
 
