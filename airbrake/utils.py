@@ -24,7 +24,10 @@ class FailProofJSONEncoder(json.JSONEncoder):
         # E0202 ignored in favor of compliance with documentation:
         # https://docs.python.org/2/library/json.html#json.JSONEncoder.default
         """Return object's repr when not JSON serializable."""
-        return repr(o)
+        try:
+            return repr(o)
+        except Exception:  # pylint: disable=W0703
+            return super(FailProofJSONEncoder, self).default(o)
 
 
 class CheckableQueue(Queue):
