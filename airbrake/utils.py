@@ -8,12 +8,26 @@ except ImportError:
 
 import traceback
 import types
+import json
 
 try:
     TypeType = types.TypeType
 except AttributeError:
     # For >= Python 3
     TypeType = type
+
+
+class FailProofJSONEncoder(json.JSONEncoder):
+    """Uses object's representation for unsupported types."""
+
+    def default(self, o):  # pylint: disable=E0202
+        # E0202 ignored in favor of compliance with documentation:
+        # https://docs.python.org/2/library/json.html#json.JSONEncoder.default
+        """Return object's repr when not JSON serializable."""
+        try:
+            return repr(o)
+        except Exception:  # pylint: disable=W0703
+            return super(FailProofJSONEncoder, self).default(o)
 
 
 class CheckableQueue(Queue):

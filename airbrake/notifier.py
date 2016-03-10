@@ -186,15 +186,13 @@ class Airbrake(object):
                    'notifier': self.notifier,
                    'environment': environment,
                    'session': session}
-
-        return self.notify(payload)
+        return self.notify(json.dumps(payload, cls=utils.FailProofJSONEncoder))
 
     def notify(self, payload):
         """Post the current errors payload body to airbrake.io."""
         headers = {'Content-Type': 'application/json'}
         api_key = {'key': self.api_key}
-
-        response = requests.post(self.api_url, data=json.dumps(payload),
+        response = requests.post(self.api_url, data=payload,
                                  headers=headers, params=api_key)
         response.raise_for_status()
         return response
