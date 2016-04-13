@@ -70,7 +70,9 @@ def is_exc_info_tuple(exc_info):
             return True
         elif all((isinstance(errtype, TypeType),
                   isinstance(value, Exception),
-                  isinstance(tback, types.TracebackType))):
+                  hasattr(tback, 'tb_frame'),
+                  hasattr(tback, 'tb_lineno'),
+                  hasattr(tback, 'tb_next'))):
             return True
     except (TypeError, ValueError):
         pass
