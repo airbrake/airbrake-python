@@ -1,7 +1,6 @@
 import airbrake
 import mock
 import unittest
-import json
 
 from airbrake.notifier import Airbrake
 
@@ -10,7 +9,6 @@ class TestAirbrakeNotifier(unittest.TestCase):
 
     def _create_notify(test, exception, session={}, environment={}, **params):
         def notify(self, payload):
-            payload = json.loads(payload)
             test.assertEqual(session, payload['session'])
             test.assertEqual(environment, payload['environment'])
             test.assertEqual(str(exception), payload['errors'][0]['message'])
@@ -66,6 +64,25 @@ class TestAirbrakeNotifier(unittest.TestCase):
         with mock.patch.object(Airbrake, 'notify', notify, 'jsonify'):
             extra = {'very': 'important', 'jsonify': non_serializable}
             self.logger.exception(Exception(msg), extra=extra)
+
+    def test_notify_payload(self):
+        # 1d7b191a2cc3b53f76f12d09f68c857183859e08 broke the `notify interface
+        # by making the assumption that the payload sent to `notify` is already
+        # encoded as a JSON string.
+        # This test ensures that such a regression can't happen again.
+        with mock.patch('requests.post') as requests_post:
+            ab = Airbrake(project_id=1234, api_key='fake', environment='test')
+            payload = dict(foo=1, bar=2)
+            ab.notify(payload)
+
+            expected_call_args = mock.call(
+                'https://airbrake.io/api/v3/projects/1234/notices',
+                data='{"bar": 2, "foo": 1}',
+                headers={'Content-Type': 'application/json'},
+                params={'key': 'fake'}
+            )
+            self.assertEqual(expected_call_args, requests_post.call_args)
+
 
 if __name__ == '__main__':
     unittest.main()

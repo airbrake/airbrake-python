@@ -186,14 +186,24 @@ class Airbrake(object):
                    'notifier': self.notifier,
                    'environment': environment,
                    'session': session}
-        return self.notify(json.dumps(payload, cls=utils.FailProofJSONEncoder))
+        return self.notify(payload)
 
     def notify(self, payload):
-        """Post the current errors payload body to airbrake.io."""
+        """Post the current errors payload body to airbrake.io.
+
+        :param dict payload:
+            Notification payload, in a dict/object form. The notification
+            payload will ultimately be sent as a JSON-encoded string, but here
+            it still needs to be in object form.
+        """
         headers = {'Content-Type': 'application/json'}
         api_key = {'key': self.api_key}
-        response = requests.post(self.api_url, data=payload,
-                                 headers=headers, params=api_key)
+        response = requests.post(
+            self.api_url,
+            data=json.dumps(payload, cls=utils.FailProofJSONEncoder,
+                            sort_keys=True),
+            headers=headers,
+            params=api_key)
         response.raise_for_status()
         return response
 
