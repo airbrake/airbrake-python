@@ -48,7 +48,7 @@ class Airbrake(object):
         # properties
         self._api_url = None
         self._context = None
-        self.deploy_url = "http://api.airbrake.io/deploys.txt"
+        self.deploy_url = "https://api.airbrake.io/deploys.txt"
         self.notifier = __notifier__
 
         if not environment:
