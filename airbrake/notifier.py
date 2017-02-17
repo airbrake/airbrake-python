@@ -218,17 +218,19 @@ class Airbrake(object):
     def deploy(self, env=None, username=None, repository=None,
                revision=None, version=None):
         """Reset counted errors for the airbrake project/environment."""
-        payload = {"environment":env or self.environment,
-                   "username":username,
-                   "repository":repository,
-                   "revision":revision,
-                   "version":version}
+        payload = {"environment": env or self.environment,
+                   "username": username,
+                   "repository": repository,
+                   "revision": revision,
+                   "version": version}
         headers = {'Content-Type': 'application/json'}
         api_key = {'key': self.api_key}
 
         response = requests.post(self.deploy_url,
-                                 data=json.dumps(payload, cls=utils.FailProofJSONEncoder,
-                                                 sort_keys=True),
+                                 data=json.dumps(
+                                     payload,
+                                     cls=utils.FailProofJSONEncoder,
+                                     sort_keys=True),
                                  headers=headers,
                                  params=api_key)
         response.raise_for_status()
