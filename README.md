@@ -80,7 +80,7 @@ _by default, the `AirbrakeHandler` only handles logs level ERROR (40) and above_
 #### Additional Options
 More options are available to configure this library. Similar to setup, you can do this with environment variables
 ```
-export AIRBRAKE_HOSTNAME=sassbox-101.prod.api
+export HOSTNAME=sassbox-101.prod.api
 ```
 Or when you instantiate the logger
 ```python

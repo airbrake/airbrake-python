@@ -57,7 +57,7 @@ class Airbrake(object):
             environment = (os.getenv('AIRBRAKE_ENVIRONMENT') or
                            socket.gethostname())
         if not hostname:
-            hostname = (os.getenv('AIRBRAKE_HOSTNAME') or
+            hostname = (os.getenv('HOSTNAME') or
                         socket.gethostname())
 
         if not project_id:
