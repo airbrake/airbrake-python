@@ -22,6 +22,8 @@ class AirbrakeHandler(logging.Handler):
         * an instance of airbrake.Airbrake
     """
 
+    # pylint: disable=too-many-arguments
+
     def __init__(self, airbrake=None, level=logging.ERROR, project_id=None,
                  api_key=None, environment=None, base_url=None, hostname=None):
         """Initialize the Airbrake handler with a default logging level.

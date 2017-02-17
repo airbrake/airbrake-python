@@ -42,6 +42,8 @@ class Airbrake(object):
         http://help.airbrake.io/kb/api-2/notifier-api-v3
     """
 
+    # pylint: disable=too-many-instance-attributes
+
     def __init__(self, project_id=None, api_key=None, environment=None,
                  base_url=None, hostname=None):
         """Client constructor."""
