@@ -23,7 +23,7 @@ class AirbrakeHandler(logging.Handler):
     """
 
     def __init__(self, airbrake=None, level=logging.ERROR, project_id=None,
-                 api_key=None, environment=None, base_url=None):
+                 api_key=None, environment=None, base_url=None, hostname=None):
         """Initialize the Airbrake handler with a default logging level.
 
         Default level of logs handled by this class are >= ERROR,
@@ -37,7 +37,7 @@ class AirbrakeHandler(logging.Handler):
             self.airbrake = airbrake
         else:
             self.airbrake = Airbrake(project_id, api_key, environment,
-                                     base_url)
+                                     base_url, hostname)
 
     def emit(self, record):
         """Log the record airbrake.io style.

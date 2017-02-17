@@ -43,7 +43,7 @@ class Airbrake(object):
     """
 
     def __init__(self, project_id=None, api_key=None, environment=None,
-                 base_url=None):
+                 base_url=None, hostname=None):
         """Client constructor."""
         # properties
         self._api_url = None
@@ -54,6 +54,10 @@ class Airbrake(object):
         if not environment:
             environment = (os.getenv('AIRBRAKE_ENVIRONMENT') or
                            socket.gethostname())
+        if not hostname:
+            hostname = (os.getenv('AIRBRAKE_HOSTNAME') or
+                        socket.gethostname())
+
         if not project_id:
             project_id = os.getenv('AIRBRAKE_PROJECT_ID', '')
         if not api_key:
@@ -66,6 +70,7 @@ class Airbrake(object):
         self.project_id = str(project_id)
         self.api_key = str(api_key)
         self.base_url = str(base_url)
+        self.hostname = str(hostname)
 
         if not all((self.project_id, self.api_key)):
             raise ab_exc.AirbrakeNotConfigured(
@@ -96,6 +101,8 @@ class Airbrake(object):
             self._context.update({'os': plat})
             # env name
             self._context.update({'environment': self.environment})
+            self._context.update({'hostname': self.hostname})
+
             # TODO(samstav)
             #   add user info:
             #       userID, userName, userEmail

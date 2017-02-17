@@ -1,5 +1,7 @@
 import airbrake
 import mock
+import platform
+import socket
 import unittest
 
 from airbrake.notifier import Airbrake
@@ -7,11 +9,14 @@ from airbrake.notifier import Airbrake
 
 class TestAirbrakeNotifier(unittest.TestCase):
 
-    def _create_notify(test, exception, session={}, environment={}, **params):
+    def _create_notify(test, exception, session={},
+                       environment={}, context={}, **params):
         def notify(self, payload):
+
             test.assertEqual(session, payload['session'])
             test.assertEqual(environment, payload['environment'])
             test.assertEqual(str(exception), payload['errors'][0]['message'])
+            test.assertEqual(context, payload['context'])
             for param_name, expected_value in params.items():
                 test.assertEqual(expected_value, payload['params'][param_name])
         return notify
@@ -23,6 +28,10 @@ class TestAirbrakeNotifier(unittest.TestCase):
             api_key='fakekey', project_id='fakeprojectid')
         self.session = {'user_id': 100}
         self.environment = {'PATH': '/usr/bin/'}
+        self.context = {'environment': socket.gethostname(),
+                        'hostname': socket.gethostname(),
+                        'os': platform.platform(),
+                        'language': 'Python %s' % platform.python_version()}
 
     def test_string(self):
         msg = "Zlonk!"
@@ -49,6 +58,12 @@ class TestAirbrakeNotifier(unittest.TestCase):
         with mock.patch.object(Airbrake, 'notify', notify):
             extra = {'environment': self.environment}
             self.logger.exception(Exception(msg), extra=extra)
+
+    def test_exception_with_context(self):
+        msg = "Zonk!"
+        notify = self._create_notify(msg, context=self.context)
+        with mock.patch.object(Airbrake, 'notify', notify):
+            self.logger.exception(Exception(msg))
 
     def test_exception_with_non_serializable(self):
         msg = "Narf!"
