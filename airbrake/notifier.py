@@ -47,8 +47,8 @@ class Airbrake(object):
         """Client constructor."""
         # properties
         self._api_url = None
+        self._deploy_url = None
         self._context = None
-        self.deploy_url = "https://api.airbrake.io/deploys.txt"
         self.notifier = __notifier__
 
         if not environment:
@@ -105,11 +105,19 @@ class Airbrake(object):
 
     @property
     def api_url(self):
-        """Create the airbrake api endpoint and return a string."""
+        """Create the airbrake notice api endpoint and return a string."""
         if not self._api_url:
             self._api_url = "%s/api/v3/projects/%s/notices" % (
                 self.base_url, self.project_id)
         return self._api_url
+
+    @property
+    def deploy_url(self):
+        """Create the airbrake deploy api endpoint and return a string."""
+        if not self._deploy_url:
+            self._deploy_url = "%s/api/v4/projects/%s/deploys" % (
+                self.base_url, self.project_id)
+        return self._deploy_url
 
     def log(self, exc_info=None, message=None, filename=None,
             line=None, function=None, errtype=None, **params):
@@ -207,14 +215,24 @@ class Airbrake(object):
         response.raise_for_status()
         return response
 
-    def deploy(self, env=None):
+    def deploy(self, env=None, username=None, repository=None,
+               revision=None, version=None):
         """Reset counted errors for the airbrake project/environment."""
-        environment = env or self.environment
+        payload = {"environment": env or self.environment,
+                   "username": username,
+                   "repository": repository,
+                   "revision": revision,
+                   "version": version}
+        headers = {'Content-Type': 'application/json'}
+        api_key = {'key': self.api_key}
 
-        params = {'api_key': self.api_key,
-                  'deploy[rails_env]': str(environment)}
-
-        response = requests.post(self.deploy_url, params=params)
+        response = requests.post(self.deploy_url,
+                                 data=json.dumps(
+                                     payload,
+                                     cls=utils.FailProofJSONEncoder,
+                                     sort_keys=True),
+                                 headers=headers,
+                                 params=api_key)
         response.raise_for_status()
         return response
 
