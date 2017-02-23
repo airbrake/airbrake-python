@@ -91,7 +91,7 @@ class TestAirbrakeLoggerHelper(TestAirbrakeHandlerBasic):
 
     def test_auto_logger_name_is_calling_module(self):
         self.assertEqual(
-            self.logger.name, 'airbrake-python-' + __name__)
+            self.logger.name, 'airbrake-python-test_handler')
 
     def test_auto_logger_has_airbrake_handler(self):
         def isabhandler(x):
@@ -132,7 +132,7 @@ class TestAirbrakeHandler(TestAirbrakeHandlerBasic):
     def test_log_captures(self):
         captured = self.do_some_logs()
         captured.check(
-            ('airbrake-python-' + __name__,
+            ('airbrake-python-test_handler',
              logging.getLevelName(logging.ERROR),
              self.logmsg)
         )

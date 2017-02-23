@@ -73,6 +73,7 @@ package_attributes = {
     'classifiers': CLASSIFIERS,
     'description': about['__summary__'],
     'install_requires': INSTALL_REQUIRES,
+    'tests_require': TESTS_REQUIRE,
     'keywords': ' '.join(about['__keywords__']),
     'license': about['__license__'],
     'long_description': LONG_DESCRIPTION,

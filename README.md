@@ -114,11 +114,22 @@ python setup.py install
 python setup.py test
 ```
 
-Run only the unit/integration tests:
-`nosetests`
+To run via nose (unit/integration tests):
+```
+source venv/bin/activate
+pip install -r ./test-requirements.txt
+source venv/bin/activate  # to get 
+nosetest
+```
 
 Run all tests, including multi-env syntax, and coverage tests.
-`tox -v --recreate`
+```
+pip install tox
+tox -v --recreate
+```
+
+It's suggested to make sure tox will pass, as CI runs this. 
+tox needs to pass before any PRs are merged.
 
 -----------------
 
