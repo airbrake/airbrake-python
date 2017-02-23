@@ -94,7 +94,7 @@ logger = airbrake.getLogger(api_key=*****, project_id=12345, hostname='sassbox-1
 
 The available options are:
 - hostname, defaults to env var `HOSTNAME` or `socket.gethostname()`
-- environment, defaults to env var `AIRBRAKE_ENVIRONMENT` or `socket.gethostname()`
+- environment, defaults to env var `AIRBRAKE_ENVIRONMENT`
 - base_url, defaults to env var `AIRBRAKE_BASE_URL` or https://airbrake.io
 - component, defaults to None
 - action, defaults to None

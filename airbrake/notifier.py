@@ -70,20 +70,15 @@ class Airbrake(object):
                 "by passing in the arguments explicitly."
             )
 
-        environment = config.get("environment")
-        if not environment:
-            environment = (os.getenv('AIRBRAKE_ENVIRONMENT') or
-                           socket.gethostname())
+        environment = config.get("environment",
+                                 os.getenv('AIRBRAKE_ENVIRONMENT'))
 
-        hostname = config.get("hostname")
-        if not hostname:
-            hostname = (os.getenv('HOSTNAME') or
-                        socket.gethostname())
+        hostname = config.get("hostname", os.getenv('HOSTNAME') or
+                              socket.gethostname())
 
-        base_url = config.get("base_url")
-        if not base_url:
-            base_url = os.getenv('AIRBRAKE_BASE_URL',
-                                 self.AIRBRAKE_BASE_URL_DEFAULT).strip('/')
+        default_base_url = os.getenv('AIRBRAKE_BASE_URL',
+                                     self.AIRBRAKE_BASE_URL_DEFAULT.strip('/'))
+        base_url = config.get("base_url", default_base_url)
 
         self.environment = str(environment)
         self.base_url = str(base_url)
