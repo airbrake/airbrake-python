@@ -112,7 +112,7 @@ class Airbrake(object):
                 'notifier': self.notifier,
                 'os': plat,
                 'hostname': self.hostname,
-                'language': 'Python %s' % version,
+                'language': 'Python/%s' % version,
                 'environment': self.environment,
                 'version': self.app_version,
                 'url': self.app_url,

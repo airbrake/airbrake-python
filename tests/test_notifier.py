@@ -129,7 +129,7 @@ class TestAirbrakeNotifier(unittest.TestCase):
                 },
                 u'os': plat,
                 u'hostname': hostname,
-                u'language': u'Python %s' % version,
+                u'language': u'Python/%s' % version,
                 u'environment': environment,
                 u'version': app_version,
                 u'url': app_url,
