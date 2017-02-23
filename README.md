@@ -110,7 +110,7 @@ Create your environment and install the test requirements
 ```
 virtualenv venv 
 source venv/bin/activate
-python setup.py install 
+pip install . 
 python setup.py test
 ```
 
@@ -118,8 +118,8 @@ To run via nose (unit/integration tests):
 ```
 source venv/bin/activate
 pip install -r ./test-requirements.txt
-source venv/bin/activate  # to get 
-nosetest
+source venv/bin/activate
+nosetests
 ```
 
 Run all tests, including multi-env syntax, and coverage tests.
