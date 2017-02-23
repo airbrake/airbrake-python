@@ -105,6 +105,21 @@ def bake(**goods):
         logger.error("No temperature defined!", extra=goods)
 ```
 
+#### Running Tests Manually
+Create your environment and install the test requirements
+```
+virtualenv venv 
+source venv/bin/activate
+python setup.py install 
+python setup.py test
+```
+
+Run only the unit/integration tests:
+`nosetests`
+
+Run all tests, including multi-env syntax, and coverage tests.
+`tox -v --recreate`
+
 -----------------
 
 The [airbrake.io](https://airbrake.io/) api docs used to implement airbrake-python are here:
