@@ -80,7 +80,8 @@ _by default, the `AirbrakeHandler` only handles logs level ERROR (40) and above_
 #### Additional Options
 More options are available to configure this library. 
 
-For example; to add more context to your errors, you can send the hostname. One way is by setting the HOSTNAME env var.
+For example, you can send the hostname to add more context to your errors.  
+One way is by setting the HOSTNAME env var.
 ```
 export HOSTNAME=sassbox-101.prod.api
 ```
