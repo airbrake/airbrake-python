@@ -124,8 +124,8 @@ class TestAirbrakeNotifier(unittest.TestCase):
             expected_context = {
                 u'notifier': {
                     u'name': u'airbrake-python',
-                    u'version': __version__.decode('unicode-escape'),
-                    u'url': __url__.decode('unicode-escape'),
+                    u'version': __version__,
+                    u'url': __url__
                 },
                 u'os': plat,
                 u'hostname': hostname,
