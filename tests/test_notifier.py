@@ -3,8 +3,11 @@ import mock
 import platform
 import socket
 import unittest
+import json
 
 from airbrake.notifier import Airbrake
+from airbrake.__about__ import __version__
+from airbrake.__about__ import __url__
 
 
 class TestAirbrakeNotifier(unittest.TestCase):
@@ -97,6 +100,51 @@ class TestAirbrakeNotifier(unittest.TestCase):
                 params={'key': 'fake'}
             )
             self.assertEqual(expected_call_args, requests_post.call_args)
+
+    def test_notify_context(self):
+        with mock.patch('requests.post') as requests_post:
+            version = platform.python_version()
+            plat = platform.platform()
+            hostname = u"test-host"
+            environment = u"testing123"
+            app_version = u"1.0.0"
+            app_url = u"https://coolapp.ly"
+            root_directory = u"/home/app/"
+            user_id = u"666"
+            user_name = u"ronaldmcdonald"
+            user_email = u"ronaldmcdonald@maccas.com"
+
+            ab = Airbrake(project_id=1234, api_key='fake', hostname=hostname,
+                          environment=environment, app_version=app_version,
+                          app_url=app_url, root_directory=root_directory,
+                          user_id=user_id, user_name=user_name,
+                          user_email=user_email)
+            ab.log("this is a test")
+
+            expected_context = {
+                u'notifier': {
+                    u'name': u'airbrake-python',
+                    u'version': __version__.decode('unicode-escape'),
+                    u'url': __url__.decode('unicode-escape'),
+                },
+                u'os': plat,
+                u'hostname': hostname,
+                u'language': u'Python %s' % version,
+                u'environment': environment,
+                u'version': app_version,
+                u'url': app_url,
+                u'rootDirectory': root_directory,
+                u'user': {
+                    u'id': user_id,
+                    u'name': user_name,
+                    u'email': user_email
+                }
+            }
+
+            data = json.loads(requests_post.call_args[1]['data'])
+            actual_context = data["context"]
+
+            self.assertEqual(expected_context, actual_context)
 
     def test_deploy_payload(self):
         with mock.patch('requests.post') as requests_post:

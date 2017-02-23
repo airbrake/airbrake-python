@@ -78,11 +78,13 @@ yourlogger.addHandler(airbrake.AirbrakeHandler())
 _by default, the `AirbrakeHandler` only handles logs level ERROR (40) and above_
 
 #### Additional Options
-More options are available to configure this library. Similar to setup, you can do this with environment variables
+More options are available to configure this library. 
+
+For example; to add more context to your errors, you can send the hostname. One way is by setting the HOSTNAME env var.
 ```
 export HOSTNAME=sassbox-101.prod.api
 ```
-Or when you instantiate the logger
+Or you can set it more explicitly when you instantiate the logger.
 ```python
 import airbrake
 
@@ -90,7 +92,19 @@ logger = airbrake.getLogger(api_key=*****, project_id=12345, hostname='sassbox-1
 ```
 
 The available options are:
-- hostname (AIRBRAKE_HOSTNAME), default: `socket.gethostname()`
+- hostname, defaults to env var `HOSTNAME` or `socket.gethostname()`
+- environment, defaults to env var `AIRBRAKE_ENVIRONMENT` or `socket.gethostname()`
+- base_url, defaults to env var `AIRBRAKE_BASE_URL` or https://airbrake.io
+- component, defaults to None
+- action, defaults to None
+- app_version, defaults to None
+- app_url, defaults to None
+- user_agent, defaults to None
+- root_directory, defaults to None
+- user_id, defaults to None
+- user_name, defaults to None
+- user_email, defaults to None
+More information about these options are available at: https://airbrake.io/docs/api/#create-notice-v3
 
 ####giving your exceptions more context
 ```python

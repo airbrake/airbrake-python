@@ -44,8 +44,9 @@ class Airbrake(object):
 
     # pylint: disable=too-many-instance-attributes
 
-    def __init__(self, project_id=None, api_key=None, environment=None,
-                 base_url=None, hostname=None):
+    AIRBRAKE_BASE_URL_DEFAULT = 'https://airbrake.io'
+
+    def __init__(self, project_id=None, api_key=None, **config):
         """Client constructor."""
         # properties
         self._api_url = None
@@ -53,26 +54,12 @@ class Airbrake(object):
         self._context = None
         self.notifier = __notifier__
 
-        if not environment:
-            environment = (os.getenv('AIRBRAKE_ENVIRONMENT') or
-                           socket.gethostname())
-        if not hostname:
-            hostname = (os.getenv('HOSTNAME') or
-                        socket.gethostname())
-
         if not project_id:
             project_id = os.getenv('AIRBRAKE_PROJECT_ID', '')
+        self.project_id = str(project_id)
         if not api_key:
             api_key = os.getenv('AIRBRAKE_API_KEY', '')
-        if not base_url:
-            base_url = os.getenv('AIRBRAKE_BASE_URL',
-                                 'https://airbrake.io').strip('/')
-
-        self.environment = str(environment)
-        self.project_id = str(project_id)
         self.api_key = str(api_key)
-        self.base_url = str(base_url)
-        self.hostname = str(hostname)
 
         if not all((self.project_id, self.api_key)):
             raise ab_exc.AirbrakeNotConfigured(
@@ -83,6 +70,35 @@ class Airbrake(object):
                 "by passing in the arguments explicitly."
             )
 
+        environment = config.get("environment")
+        if not environment:
+            environment = (os.getenv('AIRBRAKE_ENVIRONMENT') or
+                           socket.gethostname())
+
+        hostname = config.get("hostname")
+        if not hostname:
+            hostname = (os.getenv('HOSTNAME') or
+                        socket.gethostname())
+
+        base_url = config.get("base_url")
+        if not base_url:
+            base_url = os.getenv('AIRBRAKE_BASE_URL',
+                                 self.AIRBRAKE_BASE_URL_DEFAULT).strip('/')
+
+        self.environment = str(environment)
+        self.base_url = str(base_url)
+        self.hostname = str(hostname)
+
+        self.component = config.get("component")
+        self.action = config.get("action")
+        self.app_version = config.get("app_version")
+        self.app_url = config.get("app_url")
+        self.user_agent = config.get("user_agent")
+        self.root_directory = config.get("root_directory")
+        self.user_id = config.get("user_id")
+        self.user_name = config.get("user_name")
+        self.user_email = config.get("user_email")
+
         self._exc_queue = utils.CheckableQueue()
 
     def __repr__(self):
@@ -92,24 +108,27 @@ class Airbrake(object):
 
     @property
     def context(self):
-        """The python, os, and app environment context."""
+        """System, application, and user data to make more sense of errors."""
         if not self._context:
-            self._context = {}
-            # python
             version = platform.python_version()
-            self._context.update({'language': 'Python %s' % version})
-            # os
             plat = platform.platform()
-            self._context.update({'os': plat})
-            # env name
-            self._context.update({'environment': self.environment})
-            self._context.update({'hostname': self.hostname})
 
-            # TODO(samstav)
-            #   add user info:
-            #       userID, userName, userEmail
-            #   add application info:
-            #       version, url, rootDirectory
+            self._context = {
+                'notifier': self.notifier,
+                'os': plat,
+                'hostname': self.hostname,
+                'language': 'Python %s' % version,
+                'environment': self.environment,
+                'version': self.app_version,
+                'url': self.app_url,
+                'rootDirectory': self.root_directory,
+                'user': {
+                    'id': self.user_id,
+                    'name': self.user_name,
+                    'email': self.user_email
+                }
+            }
+
         return self._context
 
     @property

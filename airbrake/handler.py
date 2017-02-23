@@ -25,7 +25,7 @@ class AirbrakeHandler(logging.Handler):
     # pylint: disable=too-many-arguments
 
     def __init__(self, airbrake=None, level=logging.ERROR, project_id=None,
-                 api_key=None, environment=None, base_url=None, hostname=None):
+                 api_key=None, **config):
         """Initialize the Airbrake handler with a default logging level.
 
         Default level of logs handled by this class are >= ERROR,
@@ -38,8 +38,7 @@ class AirbrakeHandler(logging.Handler):
         if isinstance(airbrake, Airbrake):
             self.airbrake = airbrake
         else:
-            self.airbrake = Airbrake(project_id, api_key, environment,
-                                     base_url, hostname)
+            self.airbrake = Airbrake(project_id, api_key, **config)
 
     def emit(self, record):
         """Log the record airbrake.io style.
