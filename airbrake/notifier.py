@@ -105,14 +105,11 @@ class Airbrake(object):
     def context(self):
         """System, application, and user data to make more sense of errors."""
         if not self._context:
-            version = platform.python_version()
-            plat = platform.platform()
-
             self._context = {
                 'notifier': self.notifier,
-                'os': plat,
+                'os': platform.platform(),
                 'hostname': self.hostname,
-                'language': 'Python/%s' % version,
+                'language': 'Python/%s' % platform.python_version(),
                 'environment': self.environment,
                 'version': self.app_version,
                 'url': self.app_url,
