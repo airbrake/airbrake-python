@@ -226,7 +226,12 @@ class Airbrake(object):
 
     def deploy(self, env=None, username=None, repository=None,
                revision=None, version=None):
-        """Reset counted errors for the airbrake project/environment."""
+        """Post a deploy event to airbrake.io.
+
+        As a side-effect, this will resolve all active error groups for this
+        environment and project. Any errors that still exist will get created
+        again when they recur.
+        """
         payload = {"environment": env or self.environment,
                    "username": username,
                    "repository": repository,
