@@ -46,7 +46,7 @@ class Airbrake(object):
 
     AIRBRAKE_BASE_URL_DEFAULT = 'https://airbrake.io'
 
-    def __init__(self, project_id=None, api_key=None, **config):
+    def __init__(self, project_id=None, api_key=None, base_url=None, **config):
         """Client constructor."""
         # properties
         self._api_url = None
@@ -70,18 +70,18 @@ class Airbrake(object):
                 "by passing in the arguments explicitly."
             )
 
+        if not base_url:
+            base_url = os.getenv('AIRBRAKE_BASE_URL',
+                                 self.AIRBRAKE_BASE_URL_DEFAULT.strip('/'))
+        self.base_url = str(base_url)
+
+        # Context values
         environment = config.get("environment",
                                  os.getenv('AIRBRAKE_ENVIRONMENT'))
+        self.environment = str(environment)
 
         hostname = config.get("hostname", os.getenv('HOSTNAME') or
                               socket.gethostname())
-
-        default_base_url = os.getenv('AIRBRAKE_BASE_URL',
-                                     self.AIRBRAKE_BASE_URL_DEFAULT.strip('/'))
-        base_url = config.get("base_url", default_base_url)
-
-        self.environment = str(environment)
-        self.base_url = str(base_url)
         self.hostname = str(hostname)
 
         self.component = config.get("component")
