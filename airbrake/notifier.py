@@ -45,8 +45,10 @@ class Airbrake(object):
     # pylint: disable=too-many-instance-attributes
 
     AIRBRAKE_HOST_DEFAULT = 'https://airbrake.io'
+    AIRBRAKE_TIMEOUT_DEFAULT = 5
 
-    def __init__(self, project_id=None, api_key=None, host=None, **config):
+    def __init__(self, project_id=None, api_key=None, host=None, timeout=None,
+                 **config):
         """Client constructor."""
         # properties
         self._api_url = None
@@ -84,6 +86,7 @@ class Airbrake(object):
         self.hostname = str(hostname)
 
         self.root_directory = config.get("root_directory")
+        self.timeout = timeout or self.AIRBRAKE_TIMEOUT_DEFAULT
 
         self._exc_queue = utils.CheckableQueue()
 
@@ -215,7 +218,8 @@ class Airbrake(object):
             data=json.dumps(payload, cls=utils.FailProofJSONEncoder,
                             sort_keys=True),
             headers=headers,
-            params=api_key)
+            params=api_key,
+            timeout=self.timeout)
         response.raise_for_status()
         return response
 
@@ -241,7 +245,8 @@ class Airbrake(object):
                                      cls=utils.FailProofJSONEncoder,
                                      sort_keys=True),
                                  headers=headers,
-                                 params=api_key)
+                                 params=api_key,
+                                 timeout=self.timeout)
         response.raise_for_status()
         return response
 
