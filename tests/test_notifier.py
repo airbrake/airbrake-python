@@ -108,10 +108,6 @@ class TestAirbrakeNotifier(unittest.TestCase):
             hostname = u"test-host"
             environment = u"testing123"
             root_directory = u"/home/app/"
-            user_id = u"666"
-            user_name = u"ronaldmcdonald"
-            user_email = u"ronaldmcdonald@maccas.com"
-
             ab = Airbrake(project_id=1234, api_key='fake', hostname=hostname,
                           environment=environment, app_version=app_version,
                           app_url=app_url, root_directory=root_directory,
@@ -130,11 +126,6 @@ class TestAirbrakeNotifier(unittest.TestCase):
                 u'language': u'Python/%s' % version,
                 u'environment': environment,
                 u'rootDirectory': root_directory,
-                u'user': {
-                    u'id': user_id,
-                    u'name': user_name,
-                    u'email': user_email
-                }
             }
 
             data = json.loads(requests_post.call_args[1]['data'])

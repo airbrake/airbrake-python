@@ -84,13 +84,7 @@ class Airbrake(object):
                               socket.gethostname())
         self.hostname = str(hostname)
 
-        self.component = config.get("component")
-        self.action = config.get("action")
-        self.user_agent = config.get("user_agent")
         self.root_directory = config.get("root_directory")
-        self.user_id = config.get("user_id")
-        self.user_name = config.get("user_name")
-        self.user_email = config.get("user_email")
 
         self._exc_queue = utils.CheckableQueue()
 
@@ -110,11 +104,6 @@ class Airbrake(object):
                 'language': 'Python/%s' % platform.python_version(),
                 'environment': self.environment,
                 'rootDirectory': self.root_directory,
-                'user': {
-                    'id': self.user_id,
-                    'name': self.user_name,
-                    'email': self.user_email
-                }
             }
 
         return self._context

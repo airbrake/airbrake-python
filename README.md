@@ -95,14 +95,8 @@ logger = airbrake.getLogger(api_key=*****, project_id=12345, hostname='sassbox-1
 The available options are:
 - hostname, defaults to env var `HOSTNAME` or `socket.gethostname()`
 - environment, defaults to env var `AIRBRAKE_ENVIRONMENT`
-- component, defaults to None
-- action, defaults to None
-- user_agent, defaults to None
 - host, defaults to env var `AIRBRAKE_HOST` or https://airbrake.io
 - root_directory, defaults to None
-- user_id, defaults to None
-- user_name, defaults to None
-- user_email, defaults to None
 More information about these options are available at: https://airbrake.io/docs/api/#create-notice-v3
 
 ####giving your exceptions more context
