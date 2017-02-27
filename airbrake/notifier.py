@@ -44,9 +44,9 @@ class Airbrake(object):
 
     # pylint: disable=too-many-instance-attributes
 
-    AIRBRAKE_BASE_URL_DEFAULT = 'https://airbrake.io'
+    AIRBRAKE_HOST_DEFAULT = 'https://airbrake.io'
 
-    def __init__(self, project_id=None, api_key=None, base_url=None, **config):
+    def __init__(self, project_id=None, api_key=None, host=None, **config):
         """Client constructor."""
         # properties
         self._api_url = None
@@ -70,10 +70,10 @@ class Airbrake(object):
                 "by passing in the arguments explicitly."
             )
 
-        if not base_url:
-            base_url = os.getenv('AIRBRAKE_BASE_URL',
-                                 self.AIRBRAKE_BASE_URL_DEFAULT.strip('/'))
-        self.base_url = str(base_url)
+        if not host:
+            host = os.getenv('AIRBRAKE_HOST',
+                                 self.AIRBRAKE_HOST_DEFAULT.strip('/'))
+        self.host = str(host)
 
         # Context values
         environment = config.get("environment",
@@ -124,7 +124,7 @@ class Airbrake(object):
         """Create the airbrake notice api endpoint and return a string."""
         if not self._api_url:
             self._api_url = "%s/api/v3/projects/%s/notices" % (
-                self.base_url, self.project_id)
+                self.host, self.project_id)
         return self._api_url
 
     @property
@@ -132,7 +132,7 @@ class Airbrake(object):
         """Create the airbrake deploy api endpoint and return a string."""
         if not self._deploy_url:
             self._deploy_url = "%s/api/v4/projects/%s/deploys" % (
-                self.base_url, self.project_id)
+                self.host, self.project_id)
         return self._deploy_url
 
     def log(self, exc_info=None, message=None, filename=None,

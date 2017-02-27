@@ -55,15 +55,15 @@ You can configure a different endpoint than the default (`https://airbrake.io`) 
  * Setting an environment variable:
  
 ```bash
-export AIRBRAKE_BASE_URL=https://self-hosted.errbit.example.com/
+export AIRBRAKE_HOST=https://self-hosted.errbit.example.com/
 ```
 
- * Or passing a `base_url` argument to the `getLogger()` helper:
+ * Or passing a `host` argument to the `getLogger()` helper:
 
 ```python
 import airbrake
 
-logger = airbrake.getLogger(api_key=*****, project_id=12345, base_url="https://self-hosted.errbit.example.com/")
+logger = airbrake.getLogger(api_key=*****, project_id=12345, host="https://self-hosted.errbit.example.com/")
 ```
 
 ####adding the AirbrakeHandler to your existing logger
@@ -95,10 +95,10 @@ logger = airbrake.getLogger(api_key=*****, project_id=12345, hostname='sassbox-1
 The available options are:
 - hostname, defaults to env var `HOSTNAME` or `socket.gethostname()`
 - environment, defaults to env var `AIRBRAKE_ENVIRONMENT`
-- base_url, defaults to env var `AIRBRAKE_BASE_URL` or https://airbrake.io
 - component, defaults to None
 - action, defaults to None
 - user_agent, defaults to None
+- host, defaults to env var `AIRBRAKE_HOST` or https://airbrake.io
 - root_directory, defaults to None
 - user_id, defaults to None
 - user_name, defaults to None
