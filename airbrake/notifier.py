@@ -72,7 +72,7 @@ class Airbrake(object):
 
         if not host:
             host = os.getenv('AIRBRAKE_HOST',
-                                 self.AIRBRAKE_HOST_DEFAULT.strip('/'))
+                             self.AIRBRAKE_HOST_DEFAULT.strip('/'))
         self.host = str(host)
 
         # Context values
