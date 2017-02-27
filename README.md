@@ -98,8 +98,6 @@ The available options are:
 - base_url, defaults to env var `AIRBRAKE_BASE_URL` or https://airbrake.io
 - component, defaults to None
 - action, defaults to None
-- app_version, defaults to None
-- app_url, defaults to None
 - user_agent, defaults to None
 - root_directory, defaults to None
 - user_id, defaults to None

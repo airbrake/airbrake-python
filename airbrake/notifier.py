@@ -86,8 +86,6 @@ class Airbrake(object):
 
         self.component = config.get("component")
         self.action = config.get("action")
-        self.app_version = config.get("app_version")
-        self.app_url = config.get("app_url")
         self.user_agent = config.get("user_agent")
         self.root_directory = config.get("root_directory")
         self.user_id = config.get("user_id")
@@ -111,8 +109,6 @@ class Airbrake(object):
                 'hostname': self.hostname,
                 'language': 'Python/%s' % platform.python_version(),
                 'environment': self.environment,
-                'version': self.app_version,
-                'url': self.app_url,
                 'rootDirectory': self.root_directory,
                 'user': {
                     'id': self.user_id,

@@ -107,8 +107,6 @@ class TestAirbrakeNotifier(unittest.TestCase):
             plat = platform.platform()
             hostname = u"test-host"
             environment = u"testing123"
-            app_version = u"1.0.0"
-            app_url = u"https://coolapp.ly"
             root_directory = u"/home/app/"
             user_id = u"666"
             user_name = u"ronaldmcdonald"
@@ -131,8 +129,6 @@ class TestAirbrakeNotifier(unittest.TestCase):
                 u'hostname': hostname,
                 u'language': u'Python/%s' % version,
                 u'environment': environment,
-                u'version': app_version,
-                u'url': app_url,
                 u'rootDirectory': root_directory,
                 u'user': {
                     u'id': user_id,
