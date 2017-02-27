@@ -105,14 +105,12 @@ class TestAirbrakeNotifier(unittest.TestCase):
         with mock.patch('requests.post') as requests_post:
             version = platform.python_version()
             plat = platform.platform()
-            hostname = u"test-host"
             environment = u"testing123"
             root_directory = u"/home/app/"
-            ab = Airbrake(project_id=1234, api_key='fake', hostname=hostname,
-                          environment=environment, app_version=app_version,
-                          app_url=app_url, root_directory=root_directory,
-                          user_id=user_id, user_name=user_name,
-                          user_email=user_email)
+
+            ab = Airbrake(project_id=1234, api_key='fake',
+                          environment=environment,
+                          root_directory=root_directory)
             ab.log("this is a test")
 
             expected_context = {
@@ -122,7 +120,7 @@ class TestAirbrakeNotifier(unittest.TestCase):
                     u'url': __url__
                 },
                 u'os': plat,
-                u'hostname': hostname,
+                u'hostname': socket.gethostname(),
                 u'language': u'Python/%s' % version,
                 u'environment': environment,
                 u'rootDirectory': root_directory,

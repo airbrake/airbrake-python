@@ -80,16 +80,16 @@ _by default, the `AirbrakeHandler` only handles logs level ERROR (40) and above_
 #### Additional Options
 More options are available to configure this library. 
 
-For example, you can send the hostname to add more context to your errors.  
-One way is by setting the HOSTNAME env var.
+For example, you can set the environment to add more context to your errors.  
+One way is by setting the AIRBRAKE_ENVIRONMENT env var.
 ```
-export HOSTNAME=sassbox-101.prod.api
+export AIRBRAKE_ENVIRONMENT=staging
 ```
 Or you can set it more explicitly when you instantiate the logger.
 ```python
 import airbrake
 
-logger = airbrake.getLogger(api_key=*****, project_id=12345, hostname='sassbox-101.prod.api')
+logger = airbrake.getLogger(api_key=*****, project_id=12345, environment='production')
 ```
 
 The available options are:

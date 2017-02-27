@@ -80,8 +80,7 @@ class Airbrake(object):
                                  os.getenv('AIRBRAKE_ENVIRONMENT'))
         self.environment = str(environment)
 
-        hostname = config.get("hostname", os.getenv('HOSTNAME') or
-                              socket.gethostname())
+        hostname = os.getenv('HOSTNAME') or socket.gethostname()
         self.hostname = str(hostname)
 
         self.root_directory = config.get("root_directory")
