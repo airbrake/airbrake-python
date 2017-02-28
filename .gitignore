@@ -36,3 +36,5 @@ nosetests.xml
 
 # Rope
 *.ropeproject*
+coverage
+venv
