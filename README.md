@@ -55,15 +55,15 @@ You can configure a different endpoint than the default (`https://airbrake.io`) 
  * Setting an environment variable:
  
 ```bash
-export AIRBRAKE_BASE_URL=https://self-hosted.errbit.example.com/
+export AIRBRAKE_HOST=https://self-hosted.errbit.example.com/
 ```
 
- * Or passing a `base_url` argument to the `getLogger()` helper:
+ * Or passing a `host` argument to the `getLogger()` helper:
 
 ```python
 import airbrake
 
-logger = airbrake.getLogger(api_key=*****, project_id=12345, base_url="https://self-hosted.errbit.example.com/")
+logger = airbrake.getLogger(api_key=*****, project_id=12345, host="https://self-hosted.errbit.example.com/")
 ```
 
 ####adding the AirbrakeHandler to your existing logger
@@ -78,19 +78,25 @@ yourlogger.addHandler(airbrake.AirbrakeHandler())
 _by default, the `AirbrakeHandler` only handles logs level ERROR (40) and above_
 
 #### Additional Options
-More options are available to configure this library. Similar to setup, you can do this with environment variables
+More options are available to configure this library. 
+
+For example, you can set the environment to add more context to your errors.  
+One way is by setting the AIRBRAKE_ENVIRONMENT env var.
 ```
-export HOSTNAME=sassbox-101.prod.api
+export AIRBRAKE_ENVIRONMENT=staging
 ```
-Or when you instantiate the logger
+Or you can set it more explicitly when you instantiate the logger.
 ```python
 import airbrake
 
-logger = airbrake.getLogger(api_key=*****, project_id=12345, hostname='sassbox-101.prod.api')
+logger = airbrake.getLogger(api_key=*****, project_id=12345, environment='production')
 ```
 
 The available options are:
-- hostname (AIRBRAKE_HOSTNAME), default: `socket.gethostname()`
+- environment, defaults to env var `AIRBRAKE_ENVIRONMENT`
+- host, defaults to env var `AIRBRAKE_HOST` or https://airbrake.io
+- root_directory, defaults to None
+More information about these options are available at: https://airbrake.io/docs/api/#create-notice-v3
 
 ####giving your exceptions more context
 ```python

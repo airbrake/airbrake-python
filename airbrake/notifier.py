@@ -44,8 +44,9 @@ class Airbrake(object):
 
     # pylint: disable=too-many-instance-attributes
 
-    def __init__(self, project_id=None, api_key=None, environment=None,
-                 base_url=None, hostname=None):
+    AIRBRAKE_HOST_DEFAULT = 'https://airbrake.io'
+
+    def __init__(self, project_id=None, api_key=None, host=None, **config):
         """Client constructor."""
         # properties
         self._api_url = None
@@ -53,26 +54,12 @@ class Airbrake(object):
         self._context = None
         self.notifier = __notifier__
 
-        if not environment:
-            environment = (os.getenv('AIRBRAKE_ENVIRONMENT') or
-                           socket.gethostname())
-        if not hostname:
-            hostname = (os.getenv('HOSTNAME') or
-                        socket.gethostname())
-
         if not project_id:
             project_id = os.getenv('AIRBRAKE_PROJECT_ID', '')
+        self.project_id = str(project_id)
         if not api_key:
             api_key = os.getenv('AIRBRAKE_API_KEY', '')
-        if not base_url:
-            base_url = os.getenv('AIRBRAKE_BASE_URL',
-                                 'https://airbrake.io').strip('/')
-
-        self.environment = str(environment)
-        self.project_id = str(project_id)
         self.api_key = str(api_key)
-        self.base_url = str(base_url)
-        self.hostname = str(hostname)
 
         if not all((self.project_id, self.api_key)):
             raise ab_exc.AirbrakeNotConfigured(
@@ -83,6 +70,21 @@ class Airbrake(object):
                 "by passing in the arguments explicitly."
             )
 
+        if not host:
+            host = os.getenv('AIRBRAKE_HOST',
+                             self.AIRBRAKE_HOST_DEFAULT.strip('/'))
+        self.host = str(host)
+
+        # Context values
+        environment = config.get("environment",
+                                 os.getenv('AIRBRAKE_ENVIRONMENT'))
+        self.environment = str(environment)
+
+        hostname = os.getenv('HOSTNAME') or socket.gethostname()
+        self.hostname = str(hostname)
+
+        self.root_directory = config.get("root_directory")
+
         self._exc_queue = utils.CheckableQueue()
 
     def __repr__(self):
@@ -92,24 +94,17 @@ class Airbrake(object):
 
     @property
     def context(self):
-        """The python, os, and app environment context."""
+        """System, application, and user data to make more sense of errors."""
         if not self._context:
-            self._context = {}
-            # python
-            version = platform.python_version()
-            self._context.update({'language': 'Python %s' % version})
-            # os
-            plat = platform.platform()
-            self._context.update({'os': plat})
-            # env name
-            self._context.update({'environment': self.environment})
-            self._context.update({'hostname': self.hostname})
+            self._context = {
+                'notifier': self.notifier,
+                'os': platform.platform(),
+                'hostname': self.hostname,
+                'language': 'Python/%s' % platform.python_version(),
+                'environment': self.environment,
+                'rootDirectory': self.root_directory,
+            }
 
-            # TODO(samstav)
-            #   add user info:
-            #       userID, userName, userEmail
-            #   add application info:
-            #       version, url, rootDirectory
         return self._context
 
     @property
@@ -117,7 +112,7 @@ class Airbrake(object):
         """Create the airbrake notice api endpoint and return a string."""
         if not self._api_url:
             self._api_url = "%s/api/v3/projects/%s/notices" % (
-                self.base_url, self.project_id)
+                self.host, self.project_id)
         return self._api_url
 
     @property
@@ -125,7 +120,7 @@ class Airbrake(object):
         """Create the airbrake deploy api endpoint and return a string."""
         if not self._deploy_url:
             self._deploy_url = "%s/api/v4/projects/%s/deploys" % (
-                self.base_url, self.project_id)
+                self.host, self.project_id)
         return self._deploy_url
 
     def log(self, exc_info=None, message=None, filename=None,

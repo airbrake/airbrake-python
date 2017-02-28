@@ -3,8 +3,11 @@ import mock
 import platform
 import socket
 import unittest
+import json
 
 from airbrake.notifier import Airbrake
+from airbrake.__about__ import __version__
+from airbrake.__about__ import __url__
 
 
 class TestAirbrakeNotifier(unittest.TestCase):
@@ -97,6 +100,36 @@ class TestAirbrakeNotifier(unittest.TestCase):
                 params={'key': 'fake'}
             )
             self.assertEqual(expected_call_args, requests_post.call_args)
+
+    def test_notify_context(self):
+        with mock.patch('requests.post') as requests_post:
+            version = platform.python_version()
+            plat = platform.platform()
+            environment = u"testing123"
+            root_directory = u"/home/app/"
+
+            ab = Airbrake(project_id=1234, api_key='fake',
+                          environment=environment,
+                          root_directory=root_directory)
+            ab.log("this is a test")
+
+            expected_context = {
+                u'notifier': {
+                    u'name': u'airbrake-python',
+                    u'version': __version__,
+                    u'url': __url__
+                },
+                u'os': plat,
+                u'hostname': socket.gethostname(),
+                u'language': u'Python/%s' % version,
+                u'environment': environment,
+                u'rootDirectory': root_directory,
+            }
+
+            data = json.loads(requests_post.call_args[1]['data'])
+            actual_context = data["context"]
+
+            self.assertEqual(expected_context, actual_context)
 
     def test_deploy_payload(self):
         with mock.patch('requests.post') as requests_post:
