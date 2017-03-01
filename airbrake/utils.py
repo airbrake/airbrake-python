@@ -121,3 +121,20 @@ def pytb_lastline(excinfo=None):
     lines = [line for line in lines if str(line).lower() != 'none']
     if lines:
         return lines[-1]
+
+
+def non_empty_keys(data):
+    """Strip out empty keys from a dict.
+
+    :param dict data: the dict to copy
+    :return:
+    """
+    non_empty = {}
+    for (key, val) in data.items():
+        if isinstance(val, dict):
+            data = non_empty_keys(val)
+            if data:
+                non_empty[key] = data
+        elif val and val != 'None':
+            non_empty[key] = val
+    return non_empty
