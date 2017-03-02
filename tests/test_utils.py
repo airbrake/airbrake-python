@@ -25,3 +25,14 @@ class TestUtils(unittest.TestCase):
         clean_data = airbrake.utils.non_empty_keys(data)
 
         self.assertEqual(expected_data, clean_data)
+
+    def test_get_local_git_revision(self):
+        version = airbrake.utils.get_local_git_revision()
+        self.assertEqual(41, len(version))
+
+        rev_file = airbrake.utils._git_revision_from_file()
+        self.assertEqual(41, len(rev_file))
+
+        rev_binary = airbrake.utils._git_revision_with_binary()
+        self.assertEqual(41, len(rev_binary))
+        self.assertEqual(rev_binary, rev_file)
