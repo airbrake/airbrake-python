@@ -1,6 +1,7 @@
 import unittest
 
 import airbrake.utils
+import subprocess
 
 
 class TestUtils(unittest.TestCase):
@@ -30,9 +31,12 @@ class TestUtils(unittest.TestCase):
         version = airbrake.utils.get_local_git_revision()
         self.assertEqual(40, len(version))
 
-        rev_file = airbrake.utils._git_revision_from_file()
-        self.assertEqual(40, len(rev_file))
+        if airbrake.utils._get_git_path():
+            rev_file = airbrake.utils._git_revision_from_file()
+            self.assertEqual(40, len(rev_file))
 
-        rev_binary = airbrake.utils._git_revision_with_binary()
-        self.assertEqual(40, len(rev_binary))
-        self.assertEqual(rev_binary, rev_file)
+        rev = subprocess.check_output(["git", "rev-parse", "HEAD"])
+        if rev:
+            rev_binary = airbrake.utils._git_revision_with_binary()
+            self.assertEqual(40, len(rev_binary))
+            self.assertEqual(rev_binary, rev_file)
