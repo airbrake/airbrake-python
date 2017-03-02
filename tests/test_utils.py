@@ -48,6 +48,3 @@ class TestUtils(unittest.TestCase):
         if rev:
             rev_binary = airbrake.utils._git_revision_with_binary()
             self.assertIsNotNone(rev_binary)
-
-        if rev and has_fs_access:
-            self.assertEqual(rev_binary, rev_file)
