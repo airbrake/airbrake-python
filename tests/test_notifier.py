@@ -97,7 +97,8 @@ class TestAirbrakeNotifier(unittest.TestCase):
                 'https://airbrake.io/api/v3/projects/1234/notices',
                 data='{"bar": 2, "foo": 1}',
                 headers={'Content-Type': 'application/json'},
-                params={'key': 'fake'}
+                params={'key': 'fake'},
+                timeout=Airbrake.AIRBRAKE_TIMEOUT_DEFAULT
             )
             self.assertEqual(expected_call_args, requests_post.call_args)
 
@@ -148,9 +149,53 @@ class TestAirbrakeNotifier(unittest.TestCase):
                      ' "username": "user1",'
                      ' "version": "v2.0"}',
                 headers={'Content-Type': 'application/json'},
-                params={'key': 'fake'}
+                params={'key': 'fake'},
+                timeout=Airbrake.AIRBRAKE_TIMEOUT_DEFAULT
             )
             self.assertEqual(expected_call_args, requests_post.call_args)
+
+    def check_timeout(self, timeout=None, expected_timeout=None):
+        with mock.patch('requests.post') as requests_post:
+            ab = Airbrake(project_id=1234,
+                          api_key='fake',
+                          environment='test',
+                          timeout=timeout)
+            if not timeout:
+                ab = Airbrake(project_id=1234,
+                              api_key='fake',
+                              environment='test')
+
+            ab.deploy('test', 'user1')
+
+            expected_call_args = mock.call(
+                'https://airbrake.io/api/v4/projects/1234/deploys',
+                data='{"environment": "test",'
+                     ' "repository": null,'
+                     ' "revision": null,'
+                     ' "username": "user1",'
+                     ' "version": null}',
+                headers={'Content-Type': 'application/json'},
+                params={'key': 'fake'},
+                timeout=expected_timeout or Airbrake.AIRBRAKE_TIMEOUT_DEFAULT
+            )
+            self.assertEqual(expected_call_args, requests_post.call_args)
+
+            payload = dict(foo=1, bar=2)
+            ab.notify(payload)
+
+            expected_call_args = mock.call(
+                'https://airbrake.io/api/v3/projects/1234/notices',
+                data='{"bar": 2, "foo": 1}',
+                headers={'Content-Type': 'application/json'},
+                params={'key': 'fake'},
+                timeout=expected_timeout or Airbrake.AIRBRAKE_TIMEOUT_DEFAULT
+            )
+            self.assertEqual(expected_call_args, requests_post.call_args)
+
+    def test_timeouts(self):
+        self.check_timeout(expected_timeout=5)
+        self.check_timeout(-1, -1)
+        self.check_timeout(5, 5)
 
 
 if __name__ == '__main__':

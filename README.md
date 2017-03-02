@@ -96,7 +96,7 @@ The available options are:
 - environment, defaults to env var `AIRBRAKE_ENVIRONMENT`
 - host, defaults to env var `AIRBRAKE_HOST` or https://airbrake.io
 - root_directory, defaults to None
-More information about these options are available at: https://airbrake.io/docs/api/#create-notice-v3
+- timeout, defaults to 5. (Number of seconds before each request times out) 
 
 ####giving your exceptions more context
 ```python
