@@ -223,6 +223,7 @@ class Airbrake(object):
         """
 
         notice = exception
+        payload = None
 
         if isinstance(exception, Notice):
             payload = notice.payload
