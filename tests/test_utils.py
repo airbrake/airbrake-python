@@ -1,7 +1,8 @@
+import os
 import unittest
+import subprocess
 
 import airbrake.utils
-import subprocess
 
 
 class TestUtils(unittest.TestCase):
@@ -31,8 +32,8 @@ class TestUtils(unittest.TestCase):
         rev = airbrake.utils.get_local_git_revision()
         self.assertIsNotNone(rev)
 
-        git_path = airbrake.utils._get_git_path()
-        if git_path:
+        has_fs_access = os.path.exists(airbrake.utils._get_git_path())
+        if has_fs_access:
             rev_file = airbrake.utils._git_revision_from_file()
             self.assertIsNotNone(rev_file)
 
@@ -41,5 +42,5 @@ class TestUtils(unittest.TestCase):
             rev_binary = airbrake.utils._git_revision_with_binary()
             self.assertIsNotNone(rev_binary)
 
-        if rev and git_path:
+        if rev and has_fs_access:
             self.assertEqual(rev_binary, rev_file)
