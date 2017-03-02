@@ -47,6 +47,7 @@ class Airbrake(object):
 
     AIRBRAKE_HOST_DEFAULT = 'https://airbrake.io'
     AIRBRAKE_TIMEOUT_DEFAULT = 5
+    KEYS_TO_FILTER = ["params", "environment", "session"]
 
     def __init__(self, project_id=None, api_key=None, host=None, timeout=None,
                  **config):
@@ -88,6 +89,10 @@ class Airbrake(object):
 
         self.root_directory = config.get("root_directory")
         self.timeout = timeout or self.AIRBRAKE_TIMEOUT_DEFAULT
+
+        self.whitelist_keys = config.get("whitelist_keys", [])
+        self.blacklist_keys = config.get("blacklist_keys", [])
+        self.filter_chain = [self.filter_whitelist, self.filter_blacklist]
 
         self._exc_queue = utils.CheckableQueue()
 
@@ -217,6 +222,55 @@ class Airbrake(object):
         notice = self.build_notice(err)
         self.notify(notice)
 
+    def filter_keys(self, data, key_list, filter_in_list=True):
+        """
+        Replace values for selected keys in the data dict with '[Filtered]'.
+
+        :param dict data: Filter data from this object
+        :param key_list: A list of keys to filter. Values are replaced with
+            '[Filtered]'
+        :param filter_in_list: True means the key_list is a whitelist,
+            otherwise it's a blacklist
+        :return:
+        """
+        if not key_list:
+            return data
+        for (key, val) in data.items():
+            if isinstance(val, dict):
+                data = self.filter_keys(val, key_list, filter_in_list)
+            elif filter_in_list and key not in key_list:
+                data[key] = '[Filtered]'
+            elif not filter_in_list and key in key_list:
+                data[key] = '[Filtered]'
+
+        return data
+
+    def filter_whitelist(self, data):
+        """Whitelist keys in data."""
+        return self.filter_keys(data, self.whitelist_keys, True)
+
+    def filter_blacklist(self, data):
+        """Blacklist keys in data."""
+        return self.filter_keys(data, self.blacklist_keys, False)
+
+    def apply_filters(self, payload):
+        """Filter out sensitive data in the payload.
+
+        Applyies all filters in the filter_chain to the payload. This only
+        applies to keys in KEYS_TO_FILTER.
+
+        :param dict payload: A dict of data, typically a notice payload
+        :return: dict: A filtered dict object
+        """
+
+        for key in self.KEYS_TO_FILTER:
+            if key not in payload:
+                continue
+            for payload_filter in self.filter_chain:
+                payload[key] = payload_filter(payload[key])
+
+        return payload
+
     def build_notice(self, exception, params=None, session=None,
                      environment=None):
         """Build a notice object.
@@ -252,6 +306,8 @@ class Airbrake(object):
                 isinstance(exception, Error):
             notice = self.build_notice(exception)
             payload = notice.payload
+
+        payload = self.apply_filters(payload)
 
         headers = {'Content-Type': 'application/json'}
         api_key = {'key': self.api_key}
