@@ -28,11 +28,11 @@ class TestUtils(unittest.TestCase):
 
     def test_get_local_git_revision(self):
         version = airbrake.utils.get_local_git_revision()
-        self.assertEqual(41, len(version))
+        self.assertEqual(40, len(version))
 
         rev_file = airbrake.utils._git_revision_from_file()
-        self.assertEqual(41, len(rev_file))
+        self.assertEqual(40, len(rev_file))
 
         rev_binary = airbrake.utils._git_revision_with_binary()
-        self.assertEqual(41, len(rev_binary))
+        self.assertEqual(40, len(rev_binary))
         self.assertEqual(rev_binary, rev_file)

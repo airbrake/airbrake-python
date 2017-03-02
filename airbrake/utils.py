@@ -153,7 +153,7 @@ def get_local_git_revision():
 def _git_revision_with_binary():
     """Get the latest git hash using the git binary."""
     try:
-        return subprocess.check_output(["git", "rev-parse", "HEAD"])
+        return subprocess.check_output(["git", "rev-parse", "HEAD"]).strip()
     except subprocess.CalledProcessError:
         return None
 
@@ -167,11 +167,18 @@ def _git_revision_from_file():
 
 def _get_git_ref_revision(path):
     """Get the latest git hash from file."""
-    rev_file = os.path.join(path, 'refs', 'heads', 'master')
-    if not os.path.exists(rev_file):
+    head_ref_path_file = os.path.join(path, "HEAD")
+    if not os.path.exists(head_ref_path_file):
         return None
-    with open(rev_file, 'r') as rev_file_handler:
-        return rev_file_handler.read()
+    with open(head_ref_path_file, 'r') as ref_path_file:
+        ref_path = ref_path_file.read().strip()[5:]
+        if not ref_path:
+            return None
+        rev_file = os.path.join(path, ref_path)
+        if not os.path.exists(rev_file):
+            return None
+        with open(rev_file, 'r') as rev_file_handler:
+            return rev_file_handler.read().strip()
 
 
 def _get_git_path():
