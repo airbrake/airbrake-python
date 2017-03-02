@@ -28,15 +28,18 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(expected_data, clean_data)
 
     def test_get_local_git_revision(self):
-        version = airbrake.utils.get_local_git_revision()
-        self.assertEqual(40, len(version))
+        rev = airbrake.utils.get_local_git_revision()
+        self.assertIsNotNone(rev)
 
-        if airbrake.utils._get_git_path():
+        git_path = airbrake.utils._get_git_path()
+        if git_path:
             rev_file = airbrake.utils._git_revision_from_file()
-            self.assertEqual(40, len(rev_file))
+            self.assertIsNotNone(rev_file)
 
         rev = subprocess.check_output(["git", "rev-parse", "HEAD"])
         if rev:
             rev_binary = airbrake.utils._git_revision_with_binary()
-            self.assertEqual(40, len(rev_binary))
+            self.assertIsNotNone(rev_binary)
+
+        if rev and git_path:
             self.assertEqual(rev_binary, rev_file)
