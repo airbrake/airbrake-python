@@ -1,7 +1,7 @@
 import sys
 import unittest
 
-from airbrake.notifier import format_backtrace
+from airbrake.notice import format_backtrace
 from airbrake.utils import is_exc_info_tuple
 
 

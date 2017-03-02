@@ -9,13 +9,13 @@ import os
 import platform
 import socket
 import sys
-import traceback
 
 import requests
 
 from airbrake.__about__ import __notifier__
 from airbrake import exc as ab_exc
 from airbrake import utils
+from airbrake.notice import Notice, Error
 
 
 class Airbrake(object):
@@ -195,22 +195,46 @@ class Airbrake(object):
             line=line, function=function, errtype=errtype)
         environment = params.pop('environment', {})
         session = params.pop('session', {})
-        payload = {'context': self.context,
-                   'params': params,
-                   'errors': [error.data],
-                   'notifier': self.notifier,
-                   'environment': environment,
-                   'session': session}
-        return self.notify(payload)
+        notice = self.build_notice(error, params, session, environment)
 
-    def notify(self, payload):
+        return self.notify(notice)
+
+    def build_notice(self, exception, params=None, session=None,
+                     environment=None):
+        """Build a notice object.
+
+        :param Error|Exception|str exception:
+        :param params:
+        :param session:
+        :param environment:
+        :return: Notice
+        """
+
+        return Notice(exception, params, session, environment, self.context,
+                      self.notifier)
+
+    def notify(self, exception):
         """Post the current errors payload body to airbrake.io.
 
-        :param dict payload:
-            Notification payload, in a dict/object form. The notification
-            payload will ultimately be sent as a JSON-encoded string, but here
-            it still needs to be in object form.
+        :param Exception|str|Notice exception:
+            Notice object, string, or Exception object.
+            The notification payload will ultimately be sent as a JSON-encoded
+            string.
         """
+
+        notice = exception
+        payload = None
+
+        if isinstance(exception, Notice):
+            payload = notice.payload
+
+        if isinstance(exception, str) or \
+                isinstance(exception, Exception) or \
+                isinstance(exception, BaseException) or \
+                isinstance(exception, Error):
+            notice = self.build_notice(exception)
+            payload = notice.payload
+
         headers = {'Content-Type': 'application/json'}
         api_key = {'key': self.api_key}
         response = requests.post(
@@ -249,51 +273,3 @@ class Airbrake(object):
                                  timeout=self.timeout)
         response.raise_for_status()
         return response
-
-
-class Error(object):  # pylint: disable=too-few-public-methods
-    """Format the exception according to airbrake.io v3 API.
-
-    The airbrake.io docs used to implements this class are here:
-        http://help.airbrake.io/kb/api-2/notifier-api-v3
-    """
-
-    def __init__(self, exc_info=None, message=None, filename=None,
-                 line=None, function=None, errtype=None):
-        """Error object constructor."""
-        self.exc_info = exc_info
-
-        # default datastructure
-        self.data = {
-            'type': errtype or "Record",
-            'backtrace': [{'file': filename or "N/A",
-                           'line': line or 1,
-                           'function': function or "N/A"}],
-            'message': message or "N/A"}
-
-        if utils.is_exc_info_tuple(self.exc_info):
-            if not all(self.exc_info):
-                return
-            tbmessage = utils.pytb_lastline(self.exc_info)
-            self.data.update(
-                {'type': self.exc_info[1].__class__.__name__,
-                 'backtrace': format_backtrace(self.exc_info[2]),
-                 'message': message or tbmessage})
-        else:
-            raise TypeError(
-                "Airbrake module (notifier.Error) received "
-                "unsupported 'exc_info' type. Should be a "
-                "3-piece tuple as returned by sys.exc_info(). "
-                "Invalid argument was %s"
-                % self.exc_info)
-
-
-def format_backtrace(trace):
-    """Create a formatted dictionary from a traceback object."""
-    backtrace = []
-    for filename, line, func, _ in traceback.extract_tb(trace):
-        desc = {'file': filename,
-                'line': line,
-                'function': func}
-        backtrace.append(desc)
-    return backtrace

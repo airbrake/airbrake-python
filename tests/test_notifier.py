@@ -4,8 +4,11 @@ import platform
 import socket
 import unittest
 import json
+import sys
 
 from airbrake.notifier import Airbrake
+from airbrake.notice import Error, format_backtrace
+from airbrake.utils import pytb_lastline
 from airbrake.__about__ import __version__
 from airbrake.__about__ import __url__
 
@@ -83,25 +86,6 @@ class TestAirbrakeNotifier(unittest.TestCase):
             extra = {'very': 'important', 'jsonify': non_serializable}
             self.logger.exception(Exception(msg), extra=extra)
 
-    def test_notify_payload(self):
-        # 1d7b191a2cc3b53f76f12d09f68c857183859e08 broke the `notify interface
-        # by making the assumption that the payload sent to `notify` is already
-        # encoded as a JSON string.
-        # This test ensures that such a regression can't happen again.
-        with mock.patch('requests.post') as requests_post:
-            ab = Airbrake(project_id=1234, api_key='fake', environment='test')
-            payload = dict(foo=1, bar=2)
-            ab.notify(payload)
-
-            expected_call_args = mock.call(
-                'https://airbrake.io/api/v3/projects/1234/notices',
-                data='{"bar": 2, "foo": 1}',
-                headers={'Content-Type': 'application/json'},
-                params={'key': 'fake'},
-                timeout=Airbrake.AIRBRAKE_TIMEOUT_DEFAULT
-            )
-            self.assertEqual(expected_call_args, requests_post.call_args)
-
     def test_notify_context(self):
         with mock.patch('requests.post') as requests_post:
             version = platform.python_version()
@@ -132,6 +116,94 @@ class TestAirbrakeNotifier(unittest.TestCase):
 
             self.assertEqual(expected_context, actual_context)
 
+    def get_expected_payload(self, message, error_type):
+        ctx = {
+            'notifier': {
+                'name': 'airbrake-python',
+                'version': __version__,
+                'url': __url__
+            },
+            'os': platform.platform(),
+            'hostname': socket.gethostname(),
+            'language': 'Python/%s' % platform.python_version(),
+        }
+
+        return {
+            'errors': [{'backtrace': [{'function': 'N/A',
+                                       'line': 1,
+                                       'file': 'N/A'}],
+                        'message': message,
+                        'type': error_type}],
+            'context': ctx,
+            'notifier': {
+                'url': 'https://github.com/airbrake/airbrake-python',
+                'version': '1.3.4',
+                'name': 'airbrake-python'}
+        }
+
+    def test_notify_str(self):
+        ab = Airbrake(project_id=1234, api_key='fake')
+        exception_str = "This is a test"
+        exception_type = 'Error'
+        notice = ab.build_notice(exception_str)
+
+        expected_payload = self.get_expected_payload(exception_str,
+                                                     exception_type)
+        self.assertEqual(expected_payload, notice.payload)
+
+        with mock.patch('requests.post') as requests_post:
+            ab.notify(exception_str)
+            data = json.loads(requests_post.call_args[1]['data'])
+            self.assertEqual(expected_payload, data)
+
+    def test_notify_exception(self):
+        ab = Airbrake(project_id=1234, api_key='fake')
+        exception_str = "This is a test"
+        exception = ValueError(exception_str)
+        exception_type = type(exception).__name__
+        notice = ab.build_notice(exception)
+
+        expected_payload = self.get_expected_payload(exception_str,
+                                                     exception_type)
+
+        self.assertEqual(expected_payload, notice.payload)
+
+        with mock.patch('requests.post') as requests_post:
+            ab.notify(exception)
+            data = json.loads(requests_post.call_args[1]['data'])
+            self.assertEqual(expected_payload, data)
+
+    def test_notify_error(self):
+        ab = Airbrake(project_id=1234, api_key='fake')
+
+        try:
+            raise TypeError
+        except Exception as e:
+            exc_info = sys.exc_info()
+            error = Error(exc_info=exc_info)
+            notice = ab.build_notice(error)
+
+            exception_str = type(e).__name__
+            exception_type = type(e).__name__
+
+            expected_payload = self.get_expected_payload(exception_str,
+                                                         exception_type)
+
+            data = {
+                'type': exc_info[1].__class__.__name__,
+                'backtrace': format_backtrace(exc_info[2]),
+                'message': pytb_lastline(exc_info)
+            }
+
+            expected_payload['errors'] = [data]
+
+            self.assertEqual(expected_payload, notice.payload)
+
+            with mock.patch('requests.post') as requests_post:
+                ab.notify(error)
+                data = json.loads(requests_post.call_args[1]['data'])
+                self.assertEqual(expected_payload, data)
+
     def test_deploy_payload(self):
         with mock.patch('requests.post') as requests_post:
             ab = Airbrake(project_id=1234, api_key='fake', environment='test')
@@ -155,42 +227,25 @@ class TestAirbrakeNotifier(unittest.TestCase):
             self.assertEqual(expected_call_args, requests_post.call_args)
 
     def check_timeout(self, timeout=None, expected_timeout=None):
-        with mock.patch('requests.post') as requests_post:
+        ab = Airbrake(project_id=1234,
+                      api_key='fake',
+                      environment='test',
+                      timeout=timeout)
+        if not timeout:
             ab = Airbrake(project_id=1234,
                           api_key='fake',
-                          environment='test',
-                          timeout=timeout)
-            if not timeout:
-                ab = Airbrake(project_id=1234,
-                              api_key='fake',
-                              environment='test')
+                          environment='test')
 
+        with mock.patch('requests.post') as requests_post:
             ab.deploy('test', 'user1')
+            timeout = requests_post.call_args[1]['timeout']
+            self.assertEqual(expected_timeout, timeout)
 
-            expected_call_args = mock.call(
-                'https://airbrake.io/api/v4/projects/1234/deploys',
-                data='{"environment": "test",'
-                     ' "repository": null,'
-                     ' "revision": null,'
-                     ' "username": "user1",'
-                     ' "version": null}',
-                headers={'Content-Type': 'application/json'},
-                params={'key': 'fake'},
-                timeout=expected_timeout or Airbrake.AIRBRAKE_TIMEOUT_DEFAULT
-            )
-            self.assertEqual(expected_call_args, requests_post.call_args)
-
-            payload = dict(foo=1, bar=2)
-            ab.notify(payload)
-
-            expected_call_args = mock.call(
-                'https://airbrake.io/api/v3/projects/1234/notices',
-                data='{"bar": 2, "foo": 1}',
-                headers={'Content-Type': 'application/json'},
-                params={'key': 'fake'},
-                timeout=expected_timeout or Airbrake.AIRBRAKE_TIMEOUT_DEFAULT
-            )
-            self.assertEqual(expected_call_args, requests_post.call_args)
+        with mock.patch('requests.post') as requests_post:
+            notice = ab.build_notice("This is a test")
+            ab.notify(notice)
+            timeout = requests_post.call_args[1]['timeout']
+            self.assertEqual(expected_timeout, timeout)
 
     def test_timeouts(self):
         self.check_timeout(expected_timeout=5)
