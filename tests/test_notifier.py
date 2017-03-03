@@ -5,6 +5,7 @@ import socket
 import unittest
 import json
 import sys
+import traceback
 
 from airbrake.notifier import Airbrake
 from airbrake.notice import Error, format_backtrace
@@ -140,6 +141,44 @@ class TestAirbrakeNotifier(unittest.TestCase):
                 'version': '1.3.4',
                 'name': 'airbrake-python'}
         }
+
+    def test_capture(self):
+        ab = Airbrake(project_id=1234, api_key='fake')
+
+        try:
+            raise ValueError("oh nos")
+        except Exception:
+            with mock.patch('requests.post') as requests_post:
+                ab.capture()
+
+                exc_info = sys.exc_info()
+                raw_frames = traceback.extract_tb(exc_info[2])
+                exc_frame = raw_frames[0]
+                exception_str = exc_frame[3]
+                exception_type = "ERROR:%s" % exc_frame[0]
+
+                expected_payload = self.get_expected_payload(exception_str,
+                                                             exception_type)
+
+                data = {
+                    'type': exc_info[1].__class__.__name__,
+                    'backtrace': format_backtrace(exc_info[2]),
+                    'message': str(exc_frame[3])
+                }
+
+                expected_payload['errors'] = [data]
+
+                err = Error(exc_info=exc_info,
+                            filename=str(exc_frame[0]),
+                            line=str(exc_frame[1]),
+                            function=str(exc_frame[2]),
+                            message=str(exc_frame[3]),
+                            errtype="ERROR:%s" % str(exc_frame[0]))
+                notice = ab.build_notice(err)
+                self.assertEqual(expected_payload, notice.payload)
+
+                data = json.loads(requests_post.call_args[1]['data'])
+                self.assertEqual(expected_payload, data)
 
     def test_notify_str(self):
         ab = Airbrake(project_id=1234, api_key='fake')
