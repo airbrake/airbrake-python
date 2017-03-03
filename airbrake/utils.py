@@ -172,14 +172,18 @@ def _get_git_ref_revision(path):
     if not os.path.exists(head_ref_path_file):
         return None
     with open(head_ref_path_file, 'r') as ref_path_file:
-        ref_path = ref_path_file.read().strip()[5:]
-        if not ref_path:
+        ref = ref_path_file.read().strip()
+        if 'ref:' in ref:
+            ref_path = ref.partition('ref:')[-1].strip()
+            rev_file = os.path.join(path, ref_path)
+            if not os.path.exists(rev_file):
+                return None
+            with open(rev_file, 'r') as rev_file_handler:
+                return rev_file_handler.read().strip()
+        elif len(ref) == 40:
+            return ref
+        else:
             return None
-        rev_file = os.path.join(path, ref_path)
-        if not os.path.exists(rev_file):
-            return None
-        with open(rev_file, 'r') as rev_file_handler:
-            return rev_file_handler.read().strip()
 
 
 def _get_git_path():
