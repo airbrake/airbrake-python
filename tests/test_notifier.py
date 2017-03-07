@@ -291,6 +291,63 @@ class TestAirbrakeNotifier(unittest.TestCase):
         self.check_timeout(-1, -1)
         self.check_timeout(5, 5)
 
+    def check_filter(self, ab, expected_params):
+        params = {
+            "filter_me_i_dare_you": "super secret msg",
+            "blacklist_me": "I double dare you",
+            "page": 1,
+            "order": "desc"
+        }
+
+        notice = ab.build_notice("This is a test", params)
+
+        with mock.patch('requests.post') as requests_post:
+            ab.notify(notice)
+            data = json.loads(requests_post.call_args[1]['data'])
+            self.assertEqual(expected_params, data["params"])
+
+    def test_whitelist(self):
+        ab = Airbrake(project_id=1234,
+                      api_key='fake',
+                      whitelist_keys=["page", "order"])
+        expected_params = {
+            "filter_me_i_dare_you": "[Filtered]",
+            "blacklist_me": "[Filtered]",
+            "page": 1,
+            "order": "desc"
+        }
+
+        self.check_filter(ab, expected_params)
+
+    def test_blacklist(self):
+        ab = Airbrake(project_id=1234,
+                      api_key='fake',
+                      blacklist_keys=["filter_me_i_dare_you", "blacklist_me"])
+        expected_params = {
+            "filter_me_i_dare_you": "[Filtered]",
+            "blacklist_me": "[Filtered]",
+            "page": 1,
+            "order": "desc"
+        }
+
+        self.check_filter(ab, expected_params)
+
+    def test_mixed_filter(self):
+        ab = Airbrake(project_id=1234,
+                      api_key='fake',
+                      whitelist_keys=["page",
+                                      "order",
+                                      "filter_me_i_dare_you"],
+                      blacklist_keys=["filter_me_i_dare_you"])
+        expected_params = {
+            "filter_me_i_dare_you": "[Filtered]",
+            "blacklist_me": "[Filtered]",
+            "page": 1,
+            "order": "desc"
+        }
+
+        self.check_filter(ab, expected_params)
+
 
 if __name__ == '__main__':
     unittest.main()
