@@ -9,6 +9,7 @@ import os
 import platform
 import socket
 import sys
+import traceback
 
 import requests
 
@@ -198,6 +199,23 @@ class Airbrake(object):
         notice = self.build_notice(error, params, session, environment)
 
         return self.notify(notice)
+
+    def capture(self, exc_info=None, message=None, filename=None,
+                line=None, function=None, errtype=None, **params):
+        """Capture the most recent exception and send to airbrake."""
+        if not utils.is_exc_info_tuple(exc_info) or not exc_info:
+            exc_info = sys.exc_info()
+            raw_frames = traceback.extract_tb(exc_info[2])
+            exc_frame = raw_frames[0]
+        err = Error(exc_info=exc_info,
+                    filename=filename or str(exc_frame[0]),
+                    line=line or str(exc_frame[1]),
+                    function=function or str(exc_frame[2]),
+                    message=message or str(exc_frame[3]),
+                    errtype=errtype or "ERROR:%s" % str(exc_frame[0]),
+                    **params)
+        notice = self.build_notice(err)
+        self.notify(notice)
 
     def build_notice(self, exception, params=None, session=None,
                      environment=None):

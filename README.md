@@ -111,6 +111,25 @@ def bake(**goods):
         logger.error("No temperature defined!", extra=goods)
 ```
 
+### Using this library without a logger
+
+You can create an instance of the notifier directly, and send 
+errors inside exception blocks.
+```python
+from airbrake.notifier import Airbrake
+
+ab = Airbrake(project_id=1234, api_key='fake')
+
+try:
+    amazing_code()
+except ValueError as e:
+    ab.notify(e)
+except:
+    # capture all other errors
+    ab.capture()
+```
+
+
 #### Running Tests Manually
 Create your environment and install the test requirements
 ```
