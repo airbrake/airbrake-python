@@ -87,7 +87,7 @@ class Airbrake(object):
         hostname = os.getenv('HOSTNAME') or socket.gethostname()
         self.hostname = str(hostname)
 
-        self.root_directory = config.get("root_directory")
+        self.root_directory = config.get("root_directory", os.getcwd())
         self.timeout = timeout or self.AIRBRAKE_TIMEOUT_DEFAULT
 
         self.local_revision = utils.get_local_git_revision()
