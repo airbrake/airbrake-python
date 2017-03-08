@@ -1,3 +1,4 @@
+import os
 import airbrake
 import mock
 import platform
@@ -325,8 +326,8 @@ class TestAirbrakeNotifier(unittest.TestCase):
                       api_key='fake',
                       whitelist_keys=["page", "order"])
         expected_params = {
-            "filter_me_i_dare_you": "[Filtered]",
-            "blacklist_me": "[Filtered]",
+            "filter_me_i_dare_you": ab.REDACTED_DATA_MSG,
+            "blacklist_me": ab.REDACTED_DATA_MSG,
             "page": 1,
             "order": "desc"
         }
@@ -338,8 +339,8 @@ class TestAirbrakeNotifier(unittest.TestCase):
                       api_key='fake',
                       blacklist_keys=["filter_me_i_dare_you", "blacklist_me"])
         expected_params = {
-            "filter_me_i_dare_you": "[Filtered]",
-            "blacklist_me": "[Filtered]",
+            "filter_me_i_dare_you": ab.REDACTED_DATA_MSG,
+            "blacklist_me": ab.REDACTED_DATA_MSG,
             "page": 1,
             "order": "desc"
         }
@@ -354,13 +355,50 @@ class TestAirbrakeNotifier(unittest.TestCase):
                                       "filter_me_i_dare_you"],
                       blacklist_keys=["filter_me_i_dare_you"])
         expected_params = {
-            "filter_me_i_dare_you": "[Filtered]",
-            "blacklist_me": "[Filtered]",
+            "filter_me_i_dare_you": ab.REDACTED_DATA_MSG,
+            "blacklist_me": ab.REDACTED_DATA_MSG,
             "page": 1,
             "order": "desc"
         }
 
         self.check_filter(ab, expected_params)
+
+    def test_send_env_vars(self):
+        os.environ["WOAH_THERE"] = "stranger"
+        os.environ["I_AM_ENV_VAR"] = "legend"
+
+        ab = Airbrake(project_id=1234,
+                      api_key='fake',
+                      send_env_vars=True,
+                      blacklist_keys=["WOAH_THERE"])
+
+        notice = ab.build_notice("This is a test")
+
+        with mock.patch('requests.post') as requests_post:
+            ab.notify(notice)
+            data = json.loads(requests_post.call_args[1]['data'])
+            env = data["environment"]
+            self.assertEqual(env["I_AM_ENV_VAR"], os.environ["I_AM_ENV_VAR"])
+            self.assertEqual(env["I_AM_ENV_VAR"], os.environ["I_AM_ENV_VAR"])
+
+    def test_send_env_vars_manually(self):
+        manual_env = {
+            "WOAH_THERE": "stranger",
+            "I_AM_ENV_VAR": "legend",
+        }
+
+        ab = Airbrake(project_id=1234,
+                      api_key='fake',
+                      blacklist_keys=["WOAH_THERE"])
+
+        notice = ab.build_notice("This is a test", environment=manual_env)
+
+        with mock.patch('requests.post') as requests_post:
+            ab.notify(notice)
+            data = json.loads(requests_post.call_args[1]['data'])
+            env = data["environment"]
+            self.assertEqual(env["I_AM_ENV_VAR"], os.environ["I_AM_ENV_VAR"])
+            self.assertEqual(env["I_AM_ENV_VAR"], os.environ["I_AM_ENV_VAR"])
 
 
 if __name__ == '__main__':
