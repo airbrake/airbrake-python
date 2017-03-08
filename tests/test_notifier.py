@@ -265,6 +265,20 @@ class TestAirbrakeNotifier(unittest.TestCase):
             )
             self.assertEqual(expected_call_args, requests_post.call_args)
 
+    def test_deploy_revision(self):
+        with mock.patch('requests.post') as requests_post:
+            ab = Airbrake(project_id=1234, api_key='fake', environment='test')
+            ab.deploy('test',
+                      'user1',
+                      'https://github.com/airbrake/airbrake',
+                      None,
+                      'v2.0')
+
+            data = json.loads(requests_post.call_args[1]['data'])
+            version = airbrake.utils.get_local_git_revision()
+
+            self.assertEqual(version, data['revision'])
+
     def check_timeout(self, timeout=None, expected_timeout=None):
         ab = Airbrake(project_id=1234,
                       api_key='fake',

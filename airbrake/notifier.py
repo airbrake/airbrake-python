@@ -90,6 +90,8 @@ class Airbrake(object):
         self.root_directory = config.get("root_directory")
         self.timeout = timeout or self.AIRBRAKE_TIMEOUT_DEFAULT
 
+        self.local_revision = utils.get_local_git_revision()
+
         self.whitelist_keys = config.get("whitelist_keys", [])
         self.blacklist_keys = config.get("blacklist_keys", [])
         self.filter_chain = [self.filter_whitelist, self.filter_blacklist]
@@ -329,6 +331,8 @@ class Airbrake(object):
         environment and project. Any errors that still exist will get created
         again when they recur.
         """
+        if not revision and self.local_revision:
+            revision = self.local_revision
         payload = {"environment": env or self.environment,
                    "username": username,
                    "repository": repository,

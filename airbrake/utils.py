@@ -6,9 +6,11 @@ except ImportError:
     # Py2 legacy fix
     from Queue import Queue, Full, Empty
 
+import os
 import traceback
 import types
 import json
+import subprocess
 
 try:
     TypeType = types.TypeType
@@ -138,3 +140,54 @@ def non_empty_keys(data):
         elif val and val != 'None':
             non_empty[key] = val
     return non_empty
+
+
+def get_local_git_revision():
+    """Find the commit hash of the latest local commit."""
+    rev = _git_revision_with_binary()
+    if not rev:
+        rev = _git_revision_from_file()
+    return rev
+
+
+def _git_revision_with_binary():
+    """Get the latest git hash using the git binary."""
+    try:
+        rev = subprocess.check_output(["git", "rev-parse", "HEAD"])
+        return str(rev.strip())
+    except (OSError, subprocess.CalledProcessError):
+        return None
+
+
+def _git_revision_from_file():
+    """Get the latest git hash from file in .git/refs/heads/master."""
+    path = _get_git_path()
+    if os.path.exists(path):
+        return str(_get_git_ref_revision(path))
+
+
+def _get_git_ref_revision(path):
+    """Get the latest git hash from file."""
+    head_ref_path_file = os.path.join(path, "HEAD")
+    if not os.path.exists(head_ref_path_file):
+        return None
+    with open(head_ref_path_file, 'r') as ref_path_file:
+        ref = ref_path_file.read().strip()
+        if 'ref:' in ref:
+            ref_path = ref.partition('ref:')[-1].strip()
+            rev_file = os.path.join(path, ref_path)
+            if not os.path.exists(rev_file):
+                return None
+            with open(rev_file, 'r') as rev_file_handler:
+                return rev_file_handler.read().strip()
+        elif len(ref) == 40:
+            return ref
+        else:
+            return None
+
+
+def _get_git_path():
+    """Get the path to the local git repo."""
+    package_dir = os.path.dirname(__file__)
+    root_dir = os.path.normpath(os.path.join(package_dir, os.pardir))
+    return os.path.join(root_dir, '.git')
