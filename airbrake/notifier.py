@@ -48,6 +48,7 @@ class Airbrake(object):
     AIRBRAKE_HOST_DEFAULT = 'https://airbrake.io'
     AIRBRAKE_TIMEOUT_DEFAULT = 5
     KEYS_TO_FILTER = ["params", "environment", "session"]
+    REDACTED_DATA_MSG = '[Filtered]'
 
     def __init__(self, project_id=None, api_key=None, host=None, timeout=None,
                  **config):
@@ -95,6 +96,8 @@ class Airbrake(object):
         self.whitelist_keys = config.get("whitelist_keys", [])
         self.blacklist_keys = config.get("blacklist_keys", [])
         self.filter_chain = [self.filter_whitelist, self.filter_blacklist]
+
+        self.send_env_vars = config.get("send_env_vars", False)
 
         self._exc_queue = utils.CheckableQueue()
 
@@ -226,11 +229,11 @@ class Airbrake(object):
 
     def filter_keys(self, data, key_list, filter_in_list=True):
         """
-        Replace values for selected keys in the data dict with '[Filtered]'.
+        Replace values for some keys in the data with REDACTED_DATA_MSG.
 
         :param dict data: Filter data from this object
         :param key_list: A list of keys to filter. Values are replaced with
-            '[Filtered]'
+            REDACTED_DATA_MSG
         :param filter_in_list: True means the key_list is a whitelist,
             otherwise it's a blacklist
         :return:
@@ -241,9 +244,9 @@ class Airbrake(object):
             if isinstance(val, dict):
                 data = self.filter_keys(val, key_list, filter_in_list)
             elif filter_in_list and key not in key_list:
-                data[key] = '[Filtered]'
+                data[key] = self.REDACTED_DATA_MSG
             elif not filter_in_list and key in key_list:
-                data[key] = '[Filtered]'
+                data[key] = self.REDACTED_DATA_MSG
 
         return data
 
@@ -275,12 +278,14 @@ class Airbrake(object):
 
     def build_notice(self, exception, params=None, session=None,
                      environment=None):
-        """Build a notice object.
+        """Build a notice object with data from this notifier instance.
 
-        :param Error|Exception|str exception:
-        :param params:
-        :param session:
-        :param environment:
+        This data includes the context and notifier information
+
+        :param Error|Exception|str exception: An exception to send to Airbrake.
+        :param dict params: A dict of params to send in notice payload.
+        :param dict session: A dict of session data to send in notice payload.
+        :param dict environment: A dict of env vars to send in notice payload.
         :return: Notice
         """
 
@@ -308,6 +313,11 @@ class Airbrake(object):
                 isinstance(exception, Error):
             notice = self.build_notice(exception)
             payload = notice.payload
+
+        if self.send_env_vars:
+            if 'environment' not in payload:
+                payload['environment'] = {}
+            payload['environment'].update(os.environ)
 
         payload = self.apply_filters(payload)
 
