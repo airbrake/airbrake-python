@@ -274,7 +274,7 @@ class Airbrake(object):
         return payload
 
     def build_notice(self, exception, params=None, session=None,
-                     environment=None):
+                     environment=None, user=None):
         """Build a notice object.
 
         :param Error|Exception|str exception:
@@ -284,8 +284,8 @@ class Airbrake(object):
         :return: Notice
         """
 
-        return Notice(exception, params, session, environment, self.context,
-                      self.notifier)
+        return Notice(exception, params, session, environment, user,
+                      self.context, self.notifier)
 
     def notify(self, exception):
         """Post the current errors payload body to airbrake.io.

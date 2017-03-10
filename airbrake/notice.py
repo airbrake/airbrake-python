@@ -11,8 +11,9 @@ from airbrake import utils
 class Notice(object):  # pylint: disable=too-few-public-methods
     """Create Airbrake formatted notice objects from a variety of objects."""
 
+    # pylint: disable=R0913
     def __init__(self, exception, params=None, session=None,
-                 environment=None, context=None, notifier=None):
+                 environment=None, user=None, context=None, notifier=None):
         """Client Constructor."""
 
         self.exception = exception
@@ -20,6 +21,13 @@ class Notice(object):  # pylint: disable=too-few-public-methods
         self.session = session
         self.environment = environment
         self.context = context
+
+        if user:
+            data = _trim_data(user, ['id', 'name', 'email'])
+            if not context:
+                self.context = {}
+            self.context["user"] = data
+
         self.notifier = notifier
 
         if isinstance(exception, str):
@@ -53,6 +61,14 @@ class Notice(object):  # pylint: disable=too-few-public-methods
                                      'notifier': self.notifier,
                                      'environment': self.environment,
                                      'session': self.session})
+
+
+def _trim_data(ref_data, fields):
+    """Trim only fields in dict and return errors."""
+    data = {}
+    for key in fields:
+        data[key] = ref_data[key]
+    return data
 
 
 class Error(object):  # pylint: disable=too-few-public-methods
