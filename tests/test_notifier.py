@@ -1,3 +1,4 @@
+import os
 import airbrake
 import mock
 import platform
@@ -127,6 +128,7 @@ class TestAirbrakeNotifier(unittest.TestCase):
             'os': platform.platform(),
             'hostname': socket.gethostname(),
             'language': 'Python/%s' % platform.python_version(),
+            'rootDirectory': os.getcwd()
         }
 
         return {
