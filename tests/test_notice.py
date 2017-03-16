@@ -27,7 +27,16 @@ class TestNotice(unittest.TestCase):
         exception_str = "This is a test"
         exception = ValueError(exception_str)
         exception_type = type(exception).__name__
-        notice = Notice(exception)
+
+        user = {
+            "id": "12345",
+            "name": "root",
+            "email": "root@root.com",
+            "removeMe": "please"
+        }
+
+        notice = Notice(exception, user=user)
+        user.pop("removeMe")
 
         expected_payload = {
             'errors': [{'backtrace': [{'function': 'N/A',
@@ -35,6 +44,7 @@ class TestNotice(unittest.TestCase):
                                        'file': 'N/A'}],
                         'message': exception_str,
                         'type': exception_type}],
+            "context": {'user': user}
         }
         self.assertEqual(expected_payload, notice.payload)
 

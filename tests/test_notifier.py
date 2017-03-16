@@ -220,7 +220,12 @@ class TestAirbrakeNotifier(unittest.TestCase):
         except Exception as e:
             exc_info = sys.exc_info()
             error = Error(exc_info=exc_info)
-            notice = ab.build_notice(error)
+            user = {
+                "id": "12345",
+                "name": "root",
+                "email": "root@root.com"
+            }
+            notice = ab.build_notice(error, user=user)
 
             exception_str = type(e).__name__
             exception_type = type(e).__name__
@@ -235,6 +240,7 @@ class TestAirbrakeNotifier(unittest.TestCase):
             }
 
             expected_payload['errors'] = [data]
+            expected_payload['context']['user'] = user
 
             self.assertEqual(expected_payload, notice.payload)
 
