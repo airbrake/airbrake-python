@@ -7,71 +7,97 @@ import unittest
 import json
 import sys
 import traceback
+import logging
 
 from airbrake.notifier import Airbrake
-from airbrake.notice import Error, format_backtrace
+from airbrake.notice import Error, format_backtrace, ErrorLevels
 from airbrake.utils import pytb_lastline
-from airbrake.__about__ import __version__
-from airbrake.__about__ import __url__
+from airbrake.__about__ import __version__, __notifier__, __url__
 
 
 class TestAirbrakeNotifier(unittest.TestCase):
+    maxDiff = None
 
     def _create_notify(test, exception, session={},
                        environment={}, context={}, **params):
-        def notify(self, payload):
-
-            test.assertEqual(session, payload['session'])
-            test.assertEqual(environment, payload['environment'])
+        def notify(self, notice):
+            payload = notice.payload
+            # print "payload %s" % payload
+            if session:
+                test.assertEqual(session, payload['session'])
+            if environment:
+                test.assertEqual(environment, payload['environment'])
             test.assertEqual(str(exception), payload['errors'][0]['message'])
-            test.assertEqual(context, payload['context'])
+            test.assertEqual(ErrorLevels.DEFAULT_LEVEL,
+                             payload['errors'][0]['severity'])
+            if context:
+                test.assertEqual(context, payload['context'])
             for param_name, expected_value in params.items():
-                test.assertEqual(expected_value, payload['params'][param_name])
+                test.assertEqual(expected_value,
+                                 str(payload['params'][param_name]))
         return notify
 
     def setUp(self):
         super(TestAirbrakeNotifier, self).setUp()
         self.logger = airbrake.getLogger(
-            'custom-loglevel',
-            api_key='fakekey', project_id='fakeprojectid')
+            'test-notifier',
+            api_key='fakekey',
+            project_id='fakeprojectid')
         self.session = {'user_id': 100}
         self.environment = {'PATH': '/usr/bin/'}
-        self.context = {'environment': socket.gethostname(),
-                        'hostname': socket.gethostname(),
+        self.context = {'hostname': socket.gethostname(),
                         'os': platform.platform(),
-                        'language': 'Python %s' % platform.python_version()}
+                        'language': 'Python/%s' % platform.python_version(),
+                        'notifier': __notifier__,
+                        'rootDirectory': os.getcwd()}
 
     def test_string(self):
         msg = "Zlonk!"
         notify = self._create_notify(msg)
         with mock.patch.object(Airbrake, 'notify', notify):
-            self.logger.exception(msg)
+            try:
+                raise Exception(msg)
+            except:
+                self.logger.exception(msg)
 
     def test_exception(self):
         msg = "Pow!"
-        notify = self._create_notify(Exception(msg))
+        exception = Exception(msg)
+        notify = self._create_notify(exception)
         with mock.patch.object(Airbrake, 'notify', notify):
-            self.logger.exception(Exception(msg))
+            try:
+                raise exception
+            except Exception as e:
+                self.logger.exception(e)
 
     def test_exception_with_session(self):
         msg = "Boff!"
         notify = self._create_notify(msg, session=self.session)
         with mock.patch.object(Airbrake, 'notify', notify):
             extra = {'session': self.session}
-            self.logger.exception(Exception(msg), extra=extra)
+            try:
+                raise Exception(msg)
+            except Exception as e:
+                self.logger.exception(e, extra=extra)
 
     def test_exception_with_environment(self):
         msg = "Whap!"
         notify = self._create_notify(msg, environment=self.environment)
         with mock.patch.object(Airbrake, 'notify', notify):
             extra = {'environment': self.environment}
-            self.logger.exception(Exception(msg), extra=extra)
+            try:
+                raise Exception(msg)
+            except Exception as e:
+                self.logger.exception(e, extra=extra)
 
     def test_exception_with_context(self):
         msg = "Zonk!"
         notify = self._create_notify(msg, context=self.context)
         with mock.patch.object(Airbrake, 'notify', notify):
-            self.logger.exception(Exception(msg))
+            try:
+                raise Exception(msg)
+            except Exception as e:
+                self.logger.exception(e)
 
     def test_exception_with_non_serializable(self):
         msg = "Narf!"
@@ -86,7 +112,10 @@ class TestAirbrakeNotifier(unittest.TestCase):
                                      jsonify=repr(non_serializable))
         with mock.patch.object(Airbrake, 'notify', notify, 'jsonify'):
             extra = {'very': 'important', 'jsonify': non_serializable}
-            self.logger.exception(Exception(msg), extra=extra)
+            try:
+                raise Exception(msg)
+            except Exception as e:
+                self.logger.exception(e, extra=extra)
 
     def test_notify_context(self):
         with mock.patch('requests.post') as requests_post:
@@ -136,7 +165,8 @@ class TestAirbrakeNotifier(unittest.TestCase):
                                        'line': 1,
                                        'file': 'N/A'}],
                         'message': message,
-                        'type': error_type}],
+                        'type': error_type,
+                        'severity': ErrorLevels.DEFAULT_LEVEL}],
             'context': ctx,
             'notifier': {
                 'url': 'https://github.com/airbrake/airbrake-python',
@@ -165,7 +195,8 @@ class TestAirbrakeNotifier(unittest.TestCase):
                 data = {
                     'type': exc_info[1].__class__.__name__,
                     'backtrace': format_backtrace(exc_info[2]),
-                    'message': str(exc_frame[3])
+                    'message': str(exc_frame[3]),
+                    'severity': ErrorLevels.DEFAULT_LEVEL
                 }
 
                 expected_payload['errors'] = [data]
@@ -238,7 +269,8 @@ class TestAirbrakeNotifier(unittest.TestCase):
             data = {
                 'type': exc_info[1].__class__.__name__,
                 'backtrace': format_backtrace(exc_info[2]),
-                'message': pytb_lastline(exc_info)
+                'message': pytb_lastline(exc_info),
+                'severity': ErrorLevels.DEFAULT_LEVEL
             }
 
             expected_payload['errors'] = [data]
@@ -369,6 +401,29 @@ class TestAirbrakeNotifier(unittest.TestCase):
         }
 
         self.check_filter(ab, expected_params)
+
+    def test_notice_severity(self):
+        ab = Airbrake(project_id=1234, api_key='fake')
+        notice = ab.build_notice(ValueError("This is a test"),
+                                 severity=ErrorLevels.CRITICAL)
+
+        self.assertEqual(ErrorLevels.CRITICAL,
+                         notice.payload["errors"][0]["severity"])
+
+        with mock.patch('requests.post') as requests_post:
+            ab.notify(notice)
+            data = json.loads(requests_post.call_args[1]['data'])
+            error_level = data['errors'][0]['severity']
+            self.assertEqual(ErrorLevels.CRITICAL, error_level)
+
+    def test_log_critical(self):
+        msg = "Sassafraz!"
+        with mock.patch.object(Airbrake, 'notify') as notify:
+            self.assertTrue(self.logger.isEnabledFor(logging.CRITICAL))
+            self.logger.critical(msg)
+            data = notify.call_args[0][0].payload
+            self.assertEqual(ErrorLevels.CRITICAL,
+                             data['errors'][0]['severity'])
 
 
 if __name__ == '__main__':

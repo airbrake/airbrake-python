@@ -198,13 +198,13 @@ class Airbrake(object):
             exc_info = None, None, None
         self._exc_queue.put(exc_info[1])
 
+        severity = params.get("severity", None)
         error = Error(
             exc_info=exc_info, message=message, filename=filename,
-            line=line, function=function, errtype=errtype)
+            line=line, function=function, errtype=errtype, severity=severity)
         environment = params.pop('environment', {})
         session = params.pop('session', {})
         notice = self.build_notice(error, params, session, environment)
-
         return self.notify(notice)
 
     def capture(self, exc_info=None, message=None, filename=None,
@@ -274,18 +274,19 @@ class Airbrake(object):
         return payload
 
     def build_notice(self, exception, params=None, session=None,
-                     environment=None, user=None):
+                     environment=None, user=None, severity=None):
         """Build a notice object.
 
         :param Error|Exception|str exception:
         :param params:
         :param session:
         :param environment:
+        :param severity:
         :return: Notice
         """
 
         return Notice(exception, params, session, environment, user,
-                      self.context, self.notifier)
+                      self.context, self.notifier, severity)
 
     def notify(self, exception):
         """Post the current errors payload body to airbrake.io.

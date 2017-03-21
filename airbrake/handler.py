@@ -10,6 +10,7 @@ to an Airbrake error should be included here.
 import logging
 
 from airbrake.notifier import Airbrake
+from airbrake.notice import ErrorLevels
 
 _FAKE_LOGRECORD = logging.LogRecord('', '', '', '', '', '', '', '')
 
@@ -60,6 +61,11 @@ class AirbrakeHandler(logging.Handler):
             ...
             LOG.error("Bad math.", exc_info=exc_info)
         """
+        # if record.exc_info[1]:
+        #     print("record.exc_info[1], ", record.exc_info[1])
+        #     record.exc_info[1].__context__
+        #     print("wtf?, ", record.exc_info[1].__context__)
+
         try:
             airbrakeerror = airbrake_error_from_logrecord(record)
             self.airbrake.log(**airbrakeerror)
@@ -105,10 +111,17 @@ def airbrake_error_from_logrecord(record):
     airbrakeerror.update(params)
     # errtype may be overridden by the notifier if an applicable
     # exception context is available and exc_info is not False
+
     airbrakeerror['errtype'] = "%s:%s" % (record.levelname, record.filename)
+    # if record.exc_info:
+    #     getattr(record.exc_info[1], '__context__', None)
+    #     # typ, err, tb = record.exc_info
+    #     # getattr(err, '__context__', None)
+
     airbrakeerror['exc_info'] = record.exc_info
     airbrakeerror['message'] = record.getMessage()
     airbrakeerror['filename'] = record.pathname
     airbrakeerror['line'] = record.lineno
     airbrakeerror['function'] = record.funcName
+    airbrakeerror['severity'] = getattr(ErrorLevels, record.levelname)
     return airbrakeerror

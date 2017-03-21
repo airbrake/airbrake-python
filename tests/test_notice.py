@@ -1,7 +1,7 @@
 import unittest
 import sys
 
-from airbrake.notice import Notice, Error, format_backtrace
+from airbrake.notice import Notice, Error, format_backtrace, ErrorLevels
 from airbrake.utils import pytb_lastline
 
 
@@ -19,7 +19,8 @@ class TestNotice(unittest.TestCase):
                                        'line': 1,
                                        'file': 'N/A'}],
                         'message': exception_str,
-                        'type': exception_type}],
+                        'type': exception_type,
+                        'severity': ErrorLevels.DEFAULT_LEVEL}],
         }
         self.assertEqual(expected_payload, notice.payload)
 
@@ -43,7 +44,8 @@ class TestNotice(unittest.TestCase):
                                        'line': 1,
                                        'file': 'N/A'}],
                         'message': exception_str,
-                        'type': exception_type}],
+                        'type': exception_type,
+                        'severity': ErrorLevels.DEFAULT_LEVEL}],
             "context": {'user': user}
         }
         self.assertEqual(expected_payload, notice.payload)
@@ -53,13 +55,14 @@ class TestNotice(unittest.TestCase):
             raise TypeError
         except:
             exc_info = sys.exc_info()
-            error = Error(exc_info=exc_info)
+            error = Error(exc_info=exc_info, severity=ErrorLevels.WARNING)
             notice = Notice(error)
 
             data = {
                 'type': exc_info[1].__class__.__name__,
                 'backtrace': format_backtrace(exc_info[2]),
-                'message': pytb_lastline(exc_info)
+                'message': pytb_lastline(exc_info),
+                'severity': ErrorLevels.WARNING
             }
 
             expected_payload = {

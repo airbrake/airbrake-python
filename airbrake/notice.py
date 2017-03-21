@@ -8,12 +8,29 @@ import traceback
 from airbrake import utils
 
 
+class ErrorLevels(object):  # pylint: disable=too-few-public-methods,no-init
+    """Convenience error levels."""
+
+    DEBUG = "debug"
+    INFO = "info"
+    NOTICE = "notice"
+    WARNING = "warning"
+    ERROR = "error"
+    CRITICAL = "critical"
+    ALERT = "alert"
+    EMERG = "emergency"
+
+    DEFAULT_LEVEL = ERROR
+
+
 class Notice(object):  # pylint: disable=too-few-public-methods
     """Create Airbrake formatted notice objects from a variety of objects."""
 
-    # pylint: disable=R0913
+    # pylint: disable=too-many-arguments
+
     def __init__(self, exception, params=None, session=None,
-                 environment=None, user=None, context=None, notifier=None):
+                 environment=None, user=None, context=None,
+                 notifier=None, severity=None):
         """Client Constructor."""
 
         self.exception = exception
@@ -36,7 +53,8 @@ class Notice(object):  # pylint: disable=too-few-public-methods
                 'backtrace': [{'file': "N/A",
                                'line': 1,
                                'function': "N/A"}],
-                'message': exception}
+                'message': exception,
+                'severity': severity or ErrorLevels.DEFAULT_LEVEL}
             self.errors = [error]
 
         if isinstance(exception, Exception) or \
@@ -46,7 +64,8 @@ class Notice(object):  # pylint: disable=too-few-public-methods
                 'backtrace': [{'file': "N/A",
                                'line': 1,
                                'function': "N/A"}],
-                'message': str(exception)}
+                'message': str(exception),
+                'severity': severity or ErrorLevels.DEFAULT_LEVEL}
             self.errors = [error]
 
         if isinstance(exception, Error):
@@ -78,8 +97,11 @@ class Error(object):  # pylint: disable=too-few-public-methods
         http://help.airbrake.io/kb/api-2/notifier-api-v3
     """
 
+    # pylint: disable=too-many-arguments
+
     def __init__(self, exc_info=None, message=None, filename=None,
-                 line=None, function=None, errtype=None):
+                 line=None, function=None, errtype=None,
+                 severity=None):
         """Error object constructor."""
         self.exc_info = exc_info
 
@@ -89,7 +111,8 @@ class Error(object):  # pylint: disable=too-few-public-methods
             'backtrace': [{'file': filename or "N/A",
                            'line': line or 1,
                            'function': function or "N/A"}],
-            'message': message or "N/A"}
+            'message': message or "N/A",
+            'severity': severity or ErrorLevels.DEFAULT_LEVEL}
 
         if utils.is_exc_info_tuple(self.exc_info):
             if not all(self.exc_info):
@@ -98,7 +121,8 @@ class Error(object):  # pylint: disable=too-few-public-methods
             self.data.update(
                 {'type': self.exc_info[1].__class__.__name__,
                  'backtrace': format_backtrace(self.exc_info[2]),
-                 'message': message or tbmessage})
+                 'message': message or tbmessage,
+                 'severity': severity or ErrorLevels.DEFAULT_LEVEL})
         else:
             raise TypeError(
                 "Airbrake module (notice.Error) received "
