@@ -9,7 +9,7 @@ import sys
 import traceback
 import logging
 
-from airbrake.notifier import Airbrake
+from airbrake.notifier import Airbrake, capture
 from airbrake.notice import Error, format_backtrace, ErrorLevels
 from airbrake.utils import pytb_lastline
 from airbrake.__about__ import __version__, __notifier__, __url__
@@ -212,6 +212,27 @@ class TestAirbrakeNotifier(unittest.TestCase):
 
                 data = json.loads(requests_post.call_args[1]['data'])
                 self.assertEqual(expected_payload, data)
+
+    def test_capture_decorator(self):
+        ab = Airbrake(project_id=1234, api_key='fake')
+
+        with mock.patch('requests.post') as requests_post:
+
+            @capture(ab)
+            def faulty_func(msg):
+                raise ValueError(msg)
+
+            msg = "I am a banana"
+            with self.assertRaises(ValueError) as cm:
+                faulty_func(msg)
+            self.assertEqual(msg, str(cm.exception))
+
+            data = json.loads(requests_post.call_args[1]['data'])
+            err_data = data['errors'][0]
+            self.assertEqual(err_data['backtrace'][0]['function'],
+                             'faulty_func')
+            filename = err_data['backtrace'][0]['file']
+            self.assertTrue(filename.endswith("tests/test_notifier.py"))
 
     def test_notify_str(self):
         ab = Airbrake(project_id=1234, api_key='fake')

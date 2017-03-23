@@ -5,6 +5,7 @@ errors
 """
 
 import traceback
+import sys
 from airbrake import utils
 
 
@@ -67,6 +68,12 @@ class Notice(object):  # pylint: disable=too-few-public-methods
                 'message': str(exception),
                 'severity': severity or ErrorLevels.DEFAULT_LEVEL}
             self.errors = [error]
+
+        # Attempt to pull out error stacktrace if it's available.
+        exc_info = sys.exc_info()
+        if exc_info and exc_info[0]:
+            err = Error(exc_info)
+            self.errors = [err.data]
 
         if isinstance(exception, Error):
             self.errors = [exception.data]
