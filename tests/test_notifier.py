@@ -170,7 +170,7 @@ class TestAirbrakeNotifier(unittest.TestCase):
             'context': ctx,
             'notifier': {
                 'url': 'https://github.com/airbrake/airbrake-python',
-                'version': '1.3.4',
+                'version': __version__,
                 'name': 'airbrake-python'}
         }
 
