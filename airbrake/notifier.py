@@ -4,6 +4,7 @@ Initialize this class to ship errors to airbrake.io
 using the log() method.
 """
 
+from functools import wraps
 import json
 import os
 import platform
@@ -17,6 +18,47 @@ from airbrake.__about__ import __notifier__
 from airbrake import exc as ab_exc
 from airbrake import utils
 from airbrake.notice import Notice, Error
+
+
+def build_error(exc_info=None, message=None, filename=None,
+                line=None, function=None, errtype=None, **params):
+    """Build an error instance with the current exception."""
+    if not utils.is_exc_info_tuple(exc_info) or not exc_info:
+        exc_info = sys.exc_info()
+        raw_frames = traceback.extract_tb(exc_info[2])
+        exc_frame = raw_frames[0]
+    return Error(exc_info=exc_info,
+                 filename=filename or str(exc_frame[0]),
+                 line=line or str(exc_frame[1]),
+                 function=function or str(exc_frame[2]),
+                 message=message or str(exc_frame[3]),
+                 errtype=errtype or "ERROR:%s" % str(exc_frame[0]),
+                 **params)
+
+
+def capture(client):
+    """Decorator function to wrap uncaught exceptions and notify airbrake."""
+    if not isinstance(client, Airbrake):
+        raise TypeError("Capture decorator requires an Airbrake "
+                        "notifier instance")
+
+    def capture_decorator(f):
+        """Decorator."""
+        @wraps(f)
+        def wrap_exception(*args, **kwargs):
+            """Send uncaught function exceptions to airbrake."""
+            try:
+                f(*args, **kwargs)
+            except Exception as e:
+                err = build_error()
+                # Remove stacktrace line with this decorator.
+                err.data['backtrace'].pop(0)
+                notice = client.build_notice(err)
+                client.notify(notice)
+                raise e
+
+        return wrap_exception
+    return capture_decorator
 
 
 class Airbrake(object):
@@ -210,17 +252,8 @@ class Airbrake(object):
     def capture(self, exc_info=None, message=None, filename=None,
                 line=None, function=None, errtype=None, **params):
         """Capture the most recent exception and send to airbrake."""
-        if not utils.is_exc_info_tuple(exc_info) or not exc_info:
-            exc_info = sys.exc_info()
-            raw_frames = traceback.extract_tb(exc_info[2])
-            exc_frame = raw_frames[0]
-        err = Error(exc_info=exc_info,
-                    filename=filename or str(exc_frame[0]),
-                    line=line or str(exc_frame[1]),
-                    function=function or str(exc_frame[2]),
-                    message=message or str(exc_frame[3]),
-                    errtype=errtype or "ERROR:%s" % str(exc_frame[0]),
-                    **params)
+        err = build_error(exc_info, message, filename,
+                          line, function, errtype, **params)
         notice = self.build_notice(err)
         self.notify(notice)
 
