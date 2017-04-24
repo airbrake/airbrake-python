@@ -58,8 +58,7 @@ class Notice(object):  # pylint: disable=too-few-public-methods
                 'severity': severity or ErrorLevels.DEFAULT_LEVEL}
             self.errors = [error]
 
-        if isinstance(exception, Exception) or \
-                isinstance(exception, BaseException):
+        if isinstance(exception, (BaseException, Exception)):
             error = {
                 'type': type(exception).__name__,
                 'backtrace': [{'file': "N/A",
