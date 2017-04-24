@@ -62,7 +62,7 @@ TESTS_REQUIRE = [
     'flake8-docstrings>=0.2.1.post1',
     'mock>=1.3.0',
     'nose>=1.3.7',
-    'pylint>=1.4.4',
+    'pylint>=1.7.1',
     'testfixtures>=4.3.3',
 ]
 

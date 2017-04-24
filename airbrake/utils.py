@@ -43,6 +43,7 @@ class CheckableQueue(Queue):
     def __contains__(self, item):
         """Check the Queue for the existence of an item."""
         try:
+            # pylint: disable=not-context-manager
             with self.mutex:
                 return item in self.queue
         except AttributeError:
@@ -99,6 +100,7 @@ def pytb_lastline(excinfo=None):
     lines = None
     if excinfo:
         if isinstance(excinfo, Exception):
+            # pylint: disable=using-constant-test
             kls = getattr(excinfo, '__class__', '')
             if kls:
                 kls = str(getattr(kls, '__name__', ''))

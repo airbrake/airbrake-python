@@ -336,10 +336,7 @@ class Airbrake(object):
         if isinstance(exception, Notice):
             payload = notice.payload
 
-        if isinstance(exception, str) or \
-                isinstance(exception, Exception) or \
-                isinstance(exception, BaseException) or \
-                isinstance(exception, Error):
+        if isinstance(exception, (BaseException, Error, Exception, str)):
             notice = self.build_notice(exception)
             payload = notice.payload
 
