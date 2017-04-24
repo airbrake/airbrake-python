@@ -329,16 +329,9 @@ class Airbrake(object):
             The notification payload will ultimately be sent as a JSON-encoded
             string.
         """
-
-        notice = exception
-        payload = None
-
-        if isinstance(exception, Notice):
-            payload = notice.payload
-
-        if isinstance(exception, (BaseException, Error, Exception, str)):
-            notice = self.build_notice(exception)
-            payload = notice.payload
+        ex = exception
+        notice = ex if isinstance(ex, Notice) else self.build_notice(ex)
+        payload = notice.payload
 
         payload = self.apply_filters(payload)
 

@@ -44,38 +44,35 @@ class Notice(object):  # pylint: disable=too-few-public-methods
             data = _trim_data(user, ['id', 'name', 'email'])
             if not context:
                 self.context = {}
-            self.context["user"] = data
+            self.context['user'] = data
 
         self.notifier = notifier
 
-        if isinstance(exception, str):
-            error = {
-                'type': "Error",
-                'backtrace': [{'file': "N/A",
-                               'line': 1,
-                               'function': "N/A"}],
-                'message': exception,
-                'severity': severity or ErrorLevels.DEFAULT_LEVEL}
-            self.errors = [error]
-
-        if isinstance(exception, (BaseException, Exception)):
-            error = {
-                'type': type(exception).__name__,
-                'backtrace': [{'file': "N/A",
-                               'line': 1,
-                               'function': "N/A"}],
-                'message': str(exception),
-                'severity': severity or ErrorLevels.DEFAULT_LEVEL}
-            self.errors = [error]
-
-        # Attempt to pull out error stacktrace if it's available.
         exc_info = sys.exc_info()
-        if exc_info and exc_info[0]:
+
+        # First try to use an already-created Error
+        if isinstance(exception, Error):
+            self.errors = [exception.data]
+
+        # Next try to create an Error out of the stacktrace (if available).
+        elif exc_info and exc_info[0]:
             err = Error(exc_info)
             self.errors = [err.data]
 
-        if isinstance(exception, Error):
-            self.errors = [exception.data]
+        # Finally, create an error manually.
+        else:
+            error = {
+                'type': 'Error',
+                'backtrace': [{'file': 'N/A',
+                               'line': 1,
+                               'function': 'N/A'}],
+                'message': str(exception),
+                'severity': severity or ErrorLevels.DEFAULT_LEVEL}
+
+            if isinstance(exception, (BaseException, Exception)):
+                error['type'] = type(exception).__name__
+
+            self.errors = [error]
 
     @property
     def payload(self):
