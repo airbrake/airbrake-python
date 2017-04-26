@@ -24,6 +24,21 @@ class TestNotice(unittest.TestCase):
         }
         self.assertEqual(expected_payload, notice.payload)
 
+    def test_create_notice_unicode(self):
+        exception_str = u"This is a test"
+        exception_type = 'Error'
+        notice = Notice(exception_str)
+
+        expected_payload = {
+            'errors': [{'backtrace': [{'function': 'N/A',
+                                       'line': 1,
+                                       'file': 'N/A'}],
+                        'message': exception_str,
+                        'type': exception_type,
+                        'severity': ErrorLevels.DEFAULT_LEVEL}],
+        }
+        self.assertEqual(expected_payload, notice.payload)
+
     def test_create_notice_exception(self):
         exception_str = "This is a test"
         exception = ValueError(exception_str)
