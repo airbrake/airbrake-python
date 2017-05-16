@@ -31,7 +31,7 @@ export AIRBRAKE_API_KEY=*****
 export AIRBRAKE_PROJECT_ID=12345
 export AIRBRAKE_ENVIRONMENT=dev
 ```
-and you're done!  
+and you're done!
 
 
 Otherwise, you can instantiate your `AirbrakeHandler` by passing these values as arguments to the `getLogger()` helper:
@@ -53,7 +53,7 @@ Airbrake [Enterprise](https://airbrake.io/enterprise) and self-hosted alternativ
 You can configure a different endpoint than the default (`https://airbrake.io`) by either:
 
  * Setting an environment variable:
- 
+
 ```bash
 export AIRBRAKE_HOST=https://self-hosted.errbit.example.com/
 ```
@@ -78,9 +78,9 @@ yourlogger.addHandler(airbrake.AirbrakeHandler())
 _by default, the `AirbrakeHandler` only handles logs level ERROR (40) and above_
 
 #### Additional Options
-More options are available to configure this library. 
+More options are available to configure this library.
 
-For example, you can set the environment to add more context to your errors.  
+For example, you can set the environment to add more context to your errors.
 One way is by setting the AIRBRAKE_ENVIRONMENT env var.
 ```
 export AIRBRAKE_ENVIRONMENT=staging
@@ -96,7 +96,7 @@ The available options are:
 - environment, defaults to env var `AIRBRAKE_ENVIRONMENT`
 - host, defaults to env var `AIRBRAKE_HOST` or https://airbrake.io
 - root_directory, defaults to None
-- timeout, defaults to 5. (Number of seconds before each request times out) 
+- timeout, defaults to 5. (Number of seconds before each request times out)
 
 #### giving your exceptions more context
 ```python
@@ -111,9 +111,20 @@ def bake(**goods):
         logger.error("No temperature defined!", extra=goods)
 ```
 
+#### Setting severity
+
+[Severity][what-is-severity] allows categorizing how severe an error is. By
+default, it's set to `error`. To redefine severity, simply `build_notice` with
+the needed severity value. For example:
+
+```python
+notice = airbrake.build_notice(exception, severity="critical")
+airbrake.notify(notice)
+```
+
 ### Using this library without a logger
 
-You can create an instance of the notifier directly, and send 
+You can create an instance of the notifier directly, and send
 errors inside exception blocks.
 ```python
 from airbrake.notifier import Airbrake
@@ -133,9 +144,9 @@ except:
 #### Running Tests Manually
 Create your environment and install the test requirements
 ```
-virtualenv venv 
+virtualenv venv
 source venv/bin/activate
-pip install . 
+pip install .
 python setup.py test
 ```
 
@@ -153,10 +164,12 @@ pip install tox
 tox -v --recreate
 ```
 
-It's suggested to make sure tox will pass, as CI runs this. 
+It's suggested to make sure tox will pass, as CI runs this.
 tox needs to pass before any PRs are merged.
 
 -----------------
 
 The [airbrake.io](https://airbrake.io/) api docs used to implement airbrake-python are here:
 https://airbrake.io/docs/api/
+
+[[what-is-severity]: https://airbrake.io/docs/airbrake-faq/what-is-severity/]
