@@ -18,13 +18,13 @@ except Exception:
 ```
 airbrake-python is used most effectively through its [logging](http://docs.python.org/2/library/logging.html) handler, and uses the [Airbrake V3 API](https://airbrake.io/docs/api/) for error reporting.
 
-###install
+### install
 To install airbrake-python, run:
 ```bash
 $ pip install -U airbrake
 ```
 
-###setup
+### setup
 The easiest way to get set up is with a few environment variables:
 ```bash
 export AIRBRAKE_API_KEY=*****
@@ -46,7 +46,7 @@ except Exception:
     logger.exception("Bad math.")
 ```
 
-###setup for Airbrake On-Premise and other compatible back-ends (e.g. Errbit)
+### setup for Airbrake On-Premise and other compatible back-ends (e.g. Errbit)
 
 Airbrake [Enterprise](https://airbrake.io/enterprise) and self-hosted alternatives, such as [Errbit](https://github.com/errbit/errbit), provide a compatible API.
 
@@ -66,7 +66,7 @@ import airbrake
 logger = airbrake.getLogger(api_key=*****, project_id=12345, host="https://self-hosted.errbit.example.com/")
 ```
 
-####adding the AirbrakeHandler to your existing logger
+#### adding the AirbrakeHandler to your existing logger
 ```python
 import logging
 
@@ -98,7 +98,7 @@ The available options are:
 - root_directory, defaults to None
 - timeout, defaults to 5. (Number of seconds before each request times out) 
 
-####giving your exceptions more context
+#### giving your exceptions more context
 ```python
 import airbrake
 
