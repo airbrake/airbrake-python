@@ -140,12 +140,23 @@ class TestAirbrakeNotifier(unittest.TestCase):
                 u'language': u'Python/%s' % version,
                 u'environment': environment,
                 u'rootDirectory': root_directory,
+                u'severity': ErrorLevels.DEFAULT_LEVEL,
             }
 
             data = json.loads(requests_post.call_args[1]['data'])
             actual_context = data["context"]
 
             self.assertEqual(expected_context, actual_context)
+
+    def test_log_with_severity(self):
+        with mock.patch('requests.post') as requests_post:
+            ab = Airbrake(project_id=1234, api_key='fake')
+            ab.log("this is a test", severity=ErrorLevels.CRITICAL)
+
+            data = json.loads(requests_post.call_args[1]['data'])
+            actual_context = data["context"]
+
+            self.assertEqual(actual_context[u'severity'], ErrorLevels.CRITICAL)
 
     def get_expected_payload(self, message, error_type):
         ctx = {
@@ -157,7 +168,8 @@ class TestAirbrakeNotifier(unittest.TestCase):
             'os': platform.platform(),
             'hostname': socket.gethostname(),
             'language': 'Python/%s' % platform.python_version(),
-            'rootDirectory': os.getcwd()
+            'rootDirectory': os.getcwd(),
+            'severity': ErrorLevels.DEFAULT_LEVEL
         }
 
         return {
@@ -165,8 +177,7 @@ class TestAirbrakeNotifier(unittest.TestCase):
                                        'line': 1,
                                        'file': 'N/A'}],
                         'message': message,
-                        'type': error_type,
-                        'severity': ErrorLevels.DEFAULT_LEVEL}],
+                        'type': error_type}],
             'context': ctx,
             'notifier': {
                 'url': 'https://github.com/airbrake/airbrake-python',
@@ -195,11 +206,12 @@ class TestAirbrakeNotifier(unittest.TestCase):
                 data = {
                     'type': exc_info[1].__class__.__name__,
                     'backtrace': format_backtrace(exc_info[2]),
-                    'message': str(exc_frame[3]),
-                    'severity': ErrorLevels.DEFAULT_LEVEL
+                    'message': str(exc_frame[3])
                 }
 
                 expected_payload['errors'] = [data]
+                expected_payload['context']['severity'] =\
+                    ErrorLevels.DEFAULT_LEVEL
 
                 err = Error(exc_info=exc_info,
                             filename=str(exc_frame[0]),
@@ -290,12 +302,12 @@ class TestAirbrakeNotifier(unittest.TestCase):
             data = {
                 'type': exc_info[1].__class__.__name__,
                 'backtrace': format_backtrace(exc_info[2]),
-                'message': pytb_lastline(exc_info),
-                'severity': ErrorLevels.DEFAULT_LEVEL
+                'message': pytb_lastline(exc_info)
             }
 
             expected_payload['errors'] = [data]
             expected_payload['context']['user'] = user
+            expected_payload['context']['severity'] = ErrorLevels.DEFAULT_LEVEL
 
             self.assertEqual(expected_payload, notice.payload)
 
@@ -429,12 +441,12 @@ class TestAirbrakeNotifier(unittest.TestCase):
                                  severity=ErrorLevels.CRITICAL)
 
         self.assertEqual(ErrorLevels.CRITICAL,
-                         notice.payload["errors"][0]["severity"])
+                         notice.payload['context']['severity'])
 
         with mock.patch('requests.post') as requests_post:
             ab.notify(notice)
             data = json.loads(requests_post.call_args[1]['data'])
-            error_level = data['errors'][0]['severity']
+            error_level = data['context']['severity']
             self.assertEqual(ErrorLevels.CRITICAL, error_level)
 
     def test_log_critical(self):
@@ -444,7 +456,7 @@ class TestAirbrakeNotifier(unittest.TestCase):
             self.logger.critical(msg)
             data = notify.call_args[0][0].payload
             self.assertEqual(ErrorLevels.CRITICAL,
-                             data['errors'][0]['severity'])
+                             data['context']['severity'])
 
 
 if __name__ == '__main__':

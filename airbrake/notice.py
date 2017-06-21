@@ -38,12 +38,12 @@ class Notice(object):  # pylint: disable=too-few-public-methods
         self.params = params
         self.session = session
         self.environment = environment
-        self.context = context
+        self.context = context or {}
+
+        self.context['severity'] = severity or ErrorLevels.DEFAULT_LEVEL
 
         if user:
             data = _trim_data(user, ['id', 'name', 'email'])
-            if not context:
-                self.context = {}
             self.context['user'] = data
 
         self.notifier = notifier
@@ -66,8 +66,7 @@ class Notice(object):  # pylint: disable=too-few-public-methods
                 'backtrace': [{'file': 'N/A',
                                'line': 1,
                                'function': 'N/A'}],
-                'message': str(exception),
-                'severity': severity or ErrorLevels.DEFAULT_LEVEL}
+                'message': str(exception)}
 
             if isinstance(exception, (BaseException, Exception)):
                 error['type'] = type(exception).__name__
@@ -103,8 +102,7 @@ class Error(object):  # pylint: disable=too-few-public-methods
     # pylint: disable=too-many-arguments
 
     def __init__(self, exc_info=None, message=None, filename=None,
-                 line=None, function=None, errtype=None,
-                 severity=None):
+                 line=None, function=None, errtype=None):
         """Error object constructor."""
         self.exc_info = exc_info
 
@@ -114,8 +112,7 @@ class Error(object):  # pylint: disable=too-few-public-methods
             'backtrace': [{'file': filename or "N/A",
                            'line': line or 1,
                            'function': function or "N/A"}],
-            'message': message or "N/A",
-            'severity': severity or ErrorLevels.DEFAULT_LEVEL}
+            'message': message or "N/A"}
 
         if utils.is_exc_info_tuple(self.exc_info):
             if not all(self.exc_info):
@@ -124,8 +121,7 @@ class Error(object):  # pylint: disable=too-few-public-methods
             self.data.update(
                 {'type': self.exc_info[1].__class__.__name__,
                  'backtrace': format_backtrace(self.exc_info[2]),
-                 'message': message or tbmessage,
-                 'severity': severity or ErrorLevels.DEFAULT_LEVEL})
+                 'message': message or tbmessage})
         else:
             raise TypeError(
                 "Airbrake module (notice.Error) received "
