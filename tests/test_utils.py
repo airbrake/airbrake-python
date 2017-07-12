@@ -2,6 +2,7 @@ import os
 import unittest
 import subprocess
 import tempfile
+import mock
 
 import airbrake.utils
 
@@ -69,3 +70,10 @@ class TestUtils(unittest.TestCase):
         finally:
             # Go back to where we started
             os.chdir(start_dir)
+
+    def test_git_revision_from_file_non_git(self):
+        non_git_dir = tempfile.gettempdir()
+        with mock.patch('airbrake.utils._get_git_path') as meth:
+            meth.return_value = non_git_dir
+            rev = airbrake.utils._git_revision_from_file()
+            self.assertIsNone(rev)

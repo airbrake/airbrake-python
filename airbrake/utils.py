@@ -166,7 +166,10 @@ def _git_revision_from_file():
     """Get the latest git hash from file in .git/refs/heads/master."""
     path = _get_git_path()
     if os.path.exists(path):
-        return str(_get_git_ref_revision(path))
+        rev = _get_git_ref_revision(path)
+        if rev is None:
+            return None
+        return str(rev)
 
 
 def _get_git_ref_revision(path):
