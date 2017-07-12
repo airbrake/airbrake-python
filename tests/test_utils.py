@@ -1,6 +1,7 @@
 import os
 import unittest
 import subprocess
+import tempfile
 
 import airbrake.utils
 
@@ -51,3 +52,20 @@ class TestUtils(unittest.TestCase):
 
         if has_fs_access and rev:
             self.assertTrue(rev_file, rev_binary)
+
+    def test_get_git_ref_revision_non_git(self):
+        non_git_dir = tempfile.gettempdir()
+        rev = airbrake.utils._get_git_ref_revision(os.path.join(non_git_dir, '.git'))
+        self.assertIsNone(rev)
+
+    def test_git_revision_with_binary_non_git(self):
+        non_git_dir = tempfile.gettempdir()
+        start_dir = os.getcwd()
+        try:
+            # Move to a non-git directory
+            os.chdir(non_git_dir)
+            rev = airbrake.utils._git_revision_with_binary()
+            self.assertIsNone(rev)
+        finally:
+            # Go back to where we started
+            os.chdir(start_dir)

@@ -155,7 +155,8 @@ def get_local_git_revision():
 def _git_revision_with_binary():
     """Get the latest git hash using the git binary."""
     try:
-        rev = subprocess.check_output(["git", "rev-parse", "HEAD"])
+        rev = subprocess.check_output(["git", "rev-parse", "HEAD"],
+                                      stderr=subprocess.STDOUT)
         return str(rev.strip())
     except (OSError, subprocess.CalledProcessError):
         return None
