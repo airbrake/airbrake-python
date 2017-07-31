@@ -138,6 +138,11 @@ class Airbrake(object):
         self.blacklist_keys = config.get("blacklist_keys", [])
         self.filter_chain = [self.filter_whitelist, self.filter_blacklist]
 
+        self.send_uncaught_exc = config.get("send_uncaught_exc", True)
+        if self.send_uncaught_exc:
+            self.excepthook = sys.excepthook
+            sys.excepthook = self.uncaught_handler
+
         self._exc_queue = utils.CheckableQueue()
 
     def __repr__(self):
@@ -175,6 +180,13 @@ class Airbrake(object):
             self._deploy_url = "%s/api/v4/projects/%s/deploys" % (
                 self.host, self.project_id)
         return self._deploy_url
+
+    def uncaught_handler(*exc_info):
+        error = Error(exc_info=exc_info)
+        notice = self.build_notice(error)
+        self.notify(error)
+        self.log(**error)
+        self.excepthook(*exc_info)
 
     def log(self, exc_info=None, message=None, filename=None,
             line=None, function=None, errtype=None, **params):
