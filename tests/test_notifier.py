@@ -449,6 +449,7 @@ class TestAirbrakeNotifier(unittest.TestCase):
     def test_uncaught_exception(self):
         ab = Airbrake(project_id=1234, api_key='fake')
         self.preserved_syshook = False
+
         def early_exit_syshook(*exc_info):
             self.preserved_syshook = True
             return
@@ -459,7 +460,8 @@ class TestAirbrakeNotifier(unittest.TestCase):
             try:
                 raise Exception("raise to sys level")
             except Exception:
-                # nose wraps exceptions, so manually call the exception as if it was uncaught.
+                # nose wraps exceptions, so manually call the exception as
+                # if it was uncaught.
                 exc_info = sys.exc_info()
 
                 sys.excepthook(*exc_info)

@@ -181,10 +181,10 @@ class Airbrake(object):
                 self.host, self.project_id)
         return self._deploy_url
 
-    def uncaught_handler(self, ex_cls, ex, tb):
-        exc_info = (ex_cls, ex, tb)
+    def uncaught_handler(self, exception_class, exception, trace):
+        """Catch uncaught exceptions and send to airbrake."""
+        exc_info = (exception_class, exception, trace)
         error = Error(exc_info=exc_info)
-        notice = self.build_notice(error)
         self.notify(error)
         self.log(error)
         self.excepthook(exc_info)
