@@ -446,6 +446,29 @@ class TestAirbrakeNotifier(unittest.TestCase):
             self.assertEqual(ErrorLevels.CRITICAL,
                              data['errors'][0]['severity'])
 
+    def test_uncaught_exception(self):
+        ab = Airbrake(project_id=1234, api_key='fake')
+        self.preserved_syshook = False
+        def early_exit_syshook(*exc_info):
+            self.preserved_syshook = True
+            return
+
+        ab.excepthook = early_exit_syshook
+
+        with mock.patch('requests.post') as requests_post:
+            try:
+                raise Exception("raise to sys level")
+            except Exception:
+                # nose wraps exceptions, so manually call the exception as if it was uncaught.
+                exc_info = sys.exc_info()
+
+                sys.excepthook(*exc_info)
+
+            data = json.loads(requests_post.call_args[1]['data'])
+            error_level = data['errors'][0]['severity']
+            self.assertEqual(ErrorLevels.ERROR, error_level)
+            self.assertTrue(self.preserved_syshook)
+
 
 if __name__ == '__main__':
     unittest.main()
