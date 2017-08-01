@@ -25,7 +25,6 @@ except ImportError:
     DEVNULL = open(os.devnull, 'wb')
 
 
-
 class FailProofJSONEncoder(json.JSONEncoder):
     """Uses object's representation for unsupported types."""
 
