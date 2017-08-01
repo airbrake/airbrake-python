@@ -56,7 +56,8 @@ class TestUtils(unittest.TestCase):
 
     def test_get_git_ref_revision_non_git(self):
         non_git_dir = tempfile.gettempdir()
-        rev = airbrake.utils._get_git_ref_revision(os.path.join(non_git_dir, '.git'))
+        rev = airbrake.utils._get_git_ref_revision(
+            os.path.join(non_git_dir, '.git'))
         self.assertIsNone(rev)
 
     def test_git_revision_with_binary_non_git(self):
