@@ -44,7 +44,10 @@ class TestUtils(unittest.TestCase):
 
         if has_fs_access:
             rev_file = airbrake.utils._git_revision_from_file()
-            self.assertIsNotNone(rev_file)
+            self.assertIsNotNone(rev_file,
+                                 'No revision in %s: %s' % (
+                                     head_ref_path_file,
+                                     ref_path))
 
         rev = subprocess.check_output(["git", "rev-parse", "HEAD"])
         if rev:
