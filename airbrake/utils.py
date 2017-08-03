@@ -18,6 +18,12 @@ except AttributeError:
     # For >= Python 3
     TypeType = type
 
+try:
+    # For >= Python 3
+    from subprocess import DEVNULL
+except ImportError:
+    DEVNULL = open(os.devnull, 'wb')
+
 
 class FailProofJSONEncoder(json.JSONEncoder):
     """Uses object's representation for unsupported types."""
@@ -155,7 +161,8 @@ def get_local_git_revision():
 def _git_revision_with_binary():
     """Get the latest git hash using the git binary."""
     try:
-        rev = subprocess.check_output(["git", "rev-parse", "HEAD"])
+        rev = subprocess.check_output(["git", "rev-parse", "HEAD"],
+                                      stderr=DEVNULL)
         return str(rev.strip())
     except (OSError, subprocess.CalledProcessError):
         return None
@@ -165,7 +172,10 @@ def _git_revision_from_file():
     """Get the latest git hash from file in .git/refs/heads/master."""
     path = _get_git_path()
     if os.path.exists(path):
-        return str(_get_git_ref_revision(path))
+        rev = _get_git_ref_revision(path)
+        if rev is None:
+            return None
+        return str(rev)
 
 
 def _get_git_ref_revision(path):
