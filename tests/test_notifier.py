@@ -29,7 +29,7 @@ class TestAirbrakeNotifier(unittest.TestCase):
                 test.assertEqual(environment, payload['environment'])
             test.assertEqual(str(exception), payload['errors'][0]['message'])
             test.assertEqual(ErrorLevels.DEFAULT_LEVEL,
-                             payload['errors'][0]['severity'])
+                             payload['context']['severity'])
             if context:
                 test.assertEqual(context, payload['context'])
             for param_name, expected_value in params.items():
@@ -49,7 +49,8 @@ class TestAirbrakeNotifier(unittest.TestCase):
                         'os': platform.platform(),
                         'language': 'Python/%s' % platform.python_version(),
                         'notifier': __notifier__,
-                        'rootDirectory': os.getcwd()}
+                        'rootDirectory': os.getcwd(),
+                        'severity': ErrorLevels.DEFAULT_LEVEL}
 
     def test_string(self):
         msg = "Zlonk!"
@@ -479,7 +480,7 @@ class TestAirbrakeNotifier(unittest.TestCase):
                 sys.excepthook(*exc_info)
 
             data = json.loads(requests_post.call_args[1]['data'])
-            error_level = data['errors'][0]['severity']
+            error_level = data['context']['severity']
             self.assertEqual(ErrorLevels.ERROR, error_level)
             self.assertTrue(self.preserved_syshook)
 
