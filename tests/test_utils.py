@@ -6,7 +6,7 @@ import mock
 
 import airbrake.utils
 
-IS_CIRCLE_CI = 'CIRCLE_SHA1' in os.environ
+IS_CIRCLE_CI = 'CIRCLECI' in os.environ
 
 
 class TestUtils(unittest.TestCase):
