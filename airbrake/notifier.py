@@ -186,8 +186,7 @@ class Airbrake(object):
         exc_info = (exception_class, exception, trace)
         error = Error(exc_info=exc_info)
         self.notify(error)
-        self.log(error)
-        self.excepthook(exc_info)
+        self.excepthook(*exc_info)
 
     def log(self, exc_info=None, message=None, filename=None,
             line=None, function=None, errtype=None, **params):
