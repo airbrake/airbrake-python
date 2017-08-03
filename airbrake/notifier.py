@@ -243,10 +243,11 @@ class Airbrake(object):
         severity = params.get("severity", None)
         error = Error(
             exc_info=exc_info, message=message, filename=filename,
-            line=line, function=function, errtype=errtype, severity=severity)
+            line=line, function=function, errtype=errtype)
         environment = params.pop('environment', {})
         session = params.pop('session', {})
-        notice = self.build_notice(error, params, session, environment)
+        notice = self.build_notice(error, params, session, environment,
+                                   severity=severity)
         return self.notify(notice)
 
     def capture(self, exc_info=None, message=None, filename=None,

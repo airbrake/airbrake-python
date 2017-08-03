@@ -19,8 +19,8 @@ class TestNotice(unittest.TestCase):
                                        'line': 1,
                                        'file': 'N/A'}],
                         'message': exception_str,
-                        'type': exception_type,
-                        'severity': ErrorLevels.DEFAULT_LEVEL}],
+                        'type': exception_type}],
+            'context': {'severity': ErrorLevels.DEFAULT_LEVEL},
         }
         self.assertEqual(expected_payload, notice.payload)
 
@@ -34,8 +34,8 @@ class TestNotice(unittest.TestCase):
                                        'line': 1,
                                        'file': 'N/A'}],
                         'message': exception_str,
-                        'type': exception_type,
-                        'severity': ErrorLevels.DEFAULT_LEVEL}],
+                        'type': exception_type}],
+            'context': {'severity': ErrorLevels.DEFAULT_LEVEL},
         }
         self.assertEqual(expected_payload, notice.payload)
 
@@ -59,9 +59,9 @@ class TestNotice(unittest.TestCase):
                                        'line': 1,
                                        'file': 'N/A'}],
                         'message': exception_str,
-                        'type': exception_type,
-                        'severity': ErrorLevels.DEFAULT_LEVEL}],
-            "context": {'user': user}
+                        'type': exception_type}],
+            "context": {'user': user,
+                        'severity': ErrorLevels.DEFAULT_LEVEL}
         }
         self.assertEqual(expected_payload, notice.payload)
 
@@ -70,18 +70,18 @@ class TestNotice(unittest.TestCase):
             raise TypeError
         except:
             exc_info = sys.exc_info()
-            error = Error(exc_info=exc_info, severity=ErrorLevels.WARNING)
+            error = Error(exc_info=exc_info)
             notice = Notice(error)
 
             data = {
                 'type': exc_info[1].__class__.__name__,
                 'backtrace': format_backtrace(exc_info[2]),
-                'message': pytb_lastline(exc_info),
-                'severity': ErrorLevels.WARNING
+                'message': pytb_lastline(exc_info)
             }
 
             expected_payload = {
-                'errors': [data]
+                'errors': [data],
+                'context': {'severity': ErrorLevels.DEFAULT_LEVEL},
             }
 
             self.assertEqual(expected_payload, notice.payload)
