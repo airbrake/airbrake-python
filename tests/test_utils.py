@@ -32,6 +32,8 @@ class TestUtils(unittest.TestCase):
 
         self.assertEqual(expected_data, clean_data)
 
+    @unittest.skipIf(IS_CIRCLE_CI,
+                     "Pull requests in CirlceCI don't work correctly")
     def test_get_local_git_revision(self):
         rev = airbrake.utils.get_local_git_revision()
         self.assertIsNotNone(rev)
@@ -46,13 +48,10 @@ class TestUtils(unittest.TestCase):
 
         if has_fs_access:
             rev_file = airbrake.utils._git_revision_from_file()
-            if not IS_CIRCLE_CI:
-                # CircleCI does not have anything in .git/refs/heads/pull
-                # so this is not valid.
-                self.assertIsNotNone(rev_file,
-                                     'No revision in %s: %s' % (
-                                         head_ref_path_file,
-                                         ref_path))
+            self.assertIsNotNone(rev_file,
+                                 'No revision in %s: %s' % (
+                                     head_ref_path_file,
+                                     ref_path))
 
         rev = subprocess.check_output(["git", "rev-parse", "HEAD"])
         if rev:
