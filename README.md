@@ -46,6 +46,9 @@ except Exception:
     logger.exception("Bad math.")
 ```
 
+By default, airbrake will catch and send uncaught exceptions. To avoid this behvaiour, use the send_uncaught_exc option:
+`logger = airbrake.getLogger(api_key=*****, project_id=12345, send_uncaught_exc=False)`
+
 ### setup for Airbrake On-Premise and other compatible back-ends (e.g. Errbit)
 
 Airbrake [Enterprise](https://airbrake.io/enterprise) and self-hosted alternatives, such as [Errbit](https://github.com/errbit/errbit), provide a compatible API.
@@ -97,6 +100,7 @@ The available options are:
 - host, defaults to env var `AIRBRAKE_HOST` or https://airbrake.io
 - root_directory, defaults to None
 - timeout, defaults to 5. (Number of seconds before each request times out)
+- send_uncaught_exc, defaults to True (Whether or not to send uncaught exceptions)
 
 #### giving your exceptions more context
 ```python
