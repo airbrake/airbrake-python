@@ -1,7 +1,7 @@
-import unittest
 import sys
+import unittest
 
-from airbrake.notice import Notice, Error, format_backtrace, ErrorLevels
+from airbrake.notice import Error, ErrorLevels, Notice, format_backtrace
 from airbrake.utils import pytb_lastline
 
 
@@ -91,9 +91,11 @@ class TestNotice(unittest.TestCase):
             sys.exit()
         except SystemExit:
             # SystemExit will be passed up the chain
-            with self.assertRaisesRegexp(TypeError, "unsupported 'exc_info' type"):
+            with self.assertRaisesRegexp(TypeError,
+                                         "unsupported 'exc_info' type"):
                 exc_info = sys.exc_info()
-                error = Error(exc_info=exc_info)
+                Error(exc_info=exc_info)
+                self.fail("Should have failed to create Error")
 
     def test_payload_no_empty_keys(self):
         exception = Exception("This is a test")
