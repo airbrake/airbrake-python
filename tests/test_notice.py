@@ -68,7 +68,7 @@ class TestNotice(unittest.TestCase):
     def test_create_notice_error(self):
         try:
             raise TypeError
-        except:
+        except TypeError:
             exc_info = sys.exc_info()
             error = Error(exc_info=exc_info)
             notice = Notice(error)
@@ -85,6 +85,15 @@ class TestNotice(unittest.TestCase):
             }
 
             self.assertEqual(expected_payload, notice.payload)
+
+    def test_notice_error_system_exit(self):
+        try:
+            sys.exit()
+        except SystemExit:
+            # SystemExit will be passed up the chain
+            with self.assertRaisesRegexp(TypeError, "unsupported 'exc_info' type"):
+                exc_info = sys.exc_info()
+                error = Error(exc_info=exc_info)
 
     def test_payload_no_empty_keys(self):
         exception = Exception("This is a test")
