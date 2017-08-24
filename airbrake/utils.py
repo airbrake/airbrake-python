@@ -163,7 +163,7 @@ def _git_revision_with_binary():
     try:
         rev = subprocess.check_output(["git", "rev-parse", "HEAD"],
                                       stderr=DEVNULL)
-        return str(rev.strip())
+        return rev.decode('utf-8').strip()
     except (OSError, subprocess.CalledProcessError):
         return None
 
