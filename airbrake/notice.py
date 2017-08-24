@@ -128,7 +128,7 @@ class Error(object):  # pylint: disable=too-few-public-methods
                 "unsupported 'exc_info' type. Should be a "
                 "3-piece tuple as returned by sys.exc_info(). "
                 "Invalid argument was %s"
-                % self.exc_info)
+                % str(self.exc_info))
 
 
 def format_backtrace(trace):
