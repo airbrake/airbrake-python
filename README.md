@@ -3,6 +3,8 @@ airbrake-python
 
 <img src="http://f.cl.ly/items/3Z1A202C1U2j3E1O1N0n/python%2009.19.32.jpg" width=800px>
 
+*Note*. Python 3.4+ are advised to use new [Airbrake Python notifier](https://github.com/airbrake/pybrake) which supports async API and code hunks. Python 2.7 users should continue to use this notifier.
+
 [Airbrake](https://airbrake.io/) integration for python that quickly and easily plugs into your existing code.
 
 ```python
