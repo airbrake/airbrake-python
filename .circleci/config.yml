@@ -1,0 +1,24 @@
+version: 2
+jobs:
+  build_all:
+    working_directory: ~/airbrake-python
+    docker:
+      - image: randomknowledge/docker-pyenv-tox
+
+    steps:
+      - checkout
+
+      - run:
+          name: install
+          command: |
+            pip install -U pip virtualenv
+            virtualenv airbrake
+            source airbrake/bin/activate
+            pip install tox tox-pyenv
+            tox -v --recreate
+
+workflows:
+  version: 2
+  commit:
+    jobs:
+      - build_all
