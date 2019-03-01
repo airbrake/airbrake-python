@@ -327,7 +327,7 @@ class TestAirbrakeNotifier(unittest.TestCase):
                       'v2.0')
 
             expected_call_args = mock.call(
-                'https://airbrake.io/api/v4/projects/1234/deploys',
+                'https://api.airbrake.io/api/v4/projects/1234/deploys',
                 data='{"environment": "test",'
                      ' "repository": "https://github.com/airbrake/airbrake",'
                      ' "revision": "38748467ea579e7ae64f7815452307c9d05e05c5",'
