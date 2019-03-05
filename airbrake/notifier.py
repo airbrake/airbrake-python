@@ -87,7 +87,7 @@ class Airbrake(object):
 
     # pylint: disable=too-many-instance-attributes
 
-    AIRBRAKE_HOST_DEFAULT = 'https://airbrake.io'
+    AIRBRAKE_HOST_DEFAULT = 'https://api.airbrake.io'
     AIRBRAKE_TIMEOUT_DEFAULT = 5
     KEYS_TO_FILTER = ["params", "environment", "session"]
 

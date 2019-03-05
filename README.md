@@ -55,7 +55,7 @@ By default, airbrake will catch and send uncaught exceptions. To avoid this behv
 
 Airbrake [Enterprise](https://airbrake.io/enterprise) and self-hosted alternatives, such as [Errbit](https://github.com/errbit/errbit), provide a compatible API.
 
-You can configure a different endpoint than the default (`https://airbrake.io`) by either:
+You can configure a different endpoint than the default (`https://api.airbrake.io`) by either:
 
  * Setting an environment variable:
 
@@ -99,7 +99,7 @@ logger = airbrake.getLogger(api_key=*****, project_id=12345, environment='produc
 
 The available options are:
 - environment, defaults to env var `AIRBRAKE_ENVIRONMENT`
-- host, defaults to env var `AIRBRAKE_HOST` or https://airbrake.io
+- host, defaults to env var `AIRBRAKE_HOST` or https://api.airbrake.io
 - root_directory, defaults to None
 - timeout, defaults to 5. (Number of seconds before each request times out)
 - send_uncaught_exc, defaults to True (Whether or not to send uncaught exceptions)
