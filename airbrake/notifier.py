@@ -145,6 +145,9 @@ class Airbrake(object):
 
         self._exc_queue = utils.CheckableQueue()
 
+        self._ca_bundle = config.get("verify", os.getenv("AIRBRAKE_CA_BUNDLE"))
+
+
     def __repr__(self):
         """Return value for the repr function."""
         return ("Airbrake(project_id=%s, api_key=*****, environment=%s)"
@@ -356,7 +359,8 @@ class Airbrake(object):
                             sort_keys=True),
             headers=headers,
             params=api_key,
-            timeout=self.timeout)
+            timeout=self.timeout,
+            verify=self._ca_bundle)
         response.raise_for_status()
         return response
 
@@ -385,6 +389,7 @@ class Airbrake(object):
                                      sort_keys=True),
                                  headers=headers,
                                  params=api_key,
-                                 timeout=self.timeout)
+                                 timeout=self.timeout,
+                                 verify=self._ca_bundle)
         response.raise_for_status()
         return response
