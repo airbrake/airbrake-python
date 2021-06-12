@@ -119,7 +119,7 @@ class TestAirbrakeNotifier(unittest.TestCase):
                 self.logger.exception(e, extra=extra)
 
     def test_notify_context(self):
-        with mock.patch('requests.post') as requests_post:
+        with mock.patch('requests.Session.post') as requests_post:
             version = platform.python_version()
             plat = platform.platform()
             environment = u"testing123"
@@ -150,7 +150,7 @@ class TestAirbrakeNotifier(unittest.TestCase):
             self.assertEqual(expected_context, actual_context)
 
     def test_log_with_severity(self):
-        with mock.patch('requests.post') as requests_post:
+        with mock.patch('requests.Session.post') as requests_post:
             ab = Airbrake(project_id=1234, api_key='fake')
             ab.log("this is a test", severity=ErrorLevels.CRITICAL)
 
@@ -192,7 +192,7 @@ class TestAirbrakeNotifier(unittest.TestCase):
         try:
             raise ValueError("oh nos")
         except Exception:
-            with mock.patch('requests.post') as requests_post:
+            with mock.patch('requests.Session.post') as requests_post:
                 ab.capture()
 
                 exc_info = sys.exc_info()
@@ -229,7 +229,7 @@ class TestAirbrakeNotifier(unittest.TestCase):
     def test_capture_decorator(self):
         ab = Airbrake(project_id=1234, api_key='fake')
 
-        with mock.patch('requests.post') as requests_post:
+        with mock.patch('requests.Session.post') as requests_post:
 
             @capture(ab)
             def faulty_func(msg):
@@ -257,7 +257,7 @@ class TestAirbrakeNotifier(unittest.TestCase):
                                                      exception_type)
         self.assertEqual(expected_payload, notice.payload)
 
-        with mock.patch('requests.post') as requests_post:
+        with mock.patch('requests.Session.post') as requests_post:
             ab.notify(exception_str)
             data = json.loads(requests_post.call_args[1]['data'])
             self.assertEqual(expected_payload, data)
@@ -274,7 +274,7 @@ class TestAirbrakeNotifier(unittest.TestCase):
 
         self.assertEqual(expected_payload, notice.payload)
 
-        with mock.patch('requests.post') as requests_post:
+        with mock.patch('requests.Session.post') as requests_post:
             ab.notify(exception)
             data = json.loads(requests_post.call_args[1]['data'])
             self.assertEqual(expected_payload, data)
@@ -312,13 +312,13 @@ class TestAirbrakeNotifier(unittest.TestCase):
 
             self.assertEqual(expected_payload, notice.payload)
 
-            with mock.patch('requests.post') as requests_post:
+            with mock.patch('requests.Session.post') as requests_post:
                 ab.notify(error)
                 data = json.loads(requests_post.call_args[1]['data'])
                 self.assertEqual(expected_payload, data)
 
     def test_deploy_payload(self):
-        with mock.patch('requests.post') as requests_post:
+        with mock.patch('requests.Session.post') as requests_post:
             ab = Airbrake(project_id=1234, api_key='fake', environment='test')
             ab.deploy('test',
                       'user1',
@@ -340,7 +340,7 @@ class TestAirbrakeNotifier(unittest.TestCase):
             self.assertEqual(expected_call_args, requests_post.call_args)
 
     def test_deploy_revision(self):
-        with mock.patch('requests.post') as requests_post:
+        with mock.patch('requests.Session.post') as requests_post:
             ab = Airbrake(project_id=1234, api_key='fake', environment='test')
             ab.deploy('test',
                       'user1',
@@ -363,12 +363,12 @@ class TestAirbrakeNotifier(unittest.TestCase):
                           api_key='fake',
                           environment='test')
 
-        with mock.patch('requests.post') as requests_post:
+        with mock.patch('requests.Session.post') as requests_post:
             ab.deploy('test', 'user1')
             timeout = requests_post.call_args[1]['timeout']
             self.assertEqual(expected_timeout, timeout)
 
-        with mock.patch('requests.post') as requests_post:
+        with mock.patch('requests.Session.post') as requests_post:
             notice = ab.build_notice("This is a test")
             ab.notify(notice)
             timeout = requests_post.call_args[1]['timeout']
@@ -389,7 +389,7 @@ class TestAirbrakeNotifier(unittest.TestCase):
 
         notice = ab.build_notice("This is a test", params)
 
-        with mock.patch('requests.post') as requests_post:
+        with mock.patch('requests.Session.post') as requests_post:
             ab.notify(notice)
             data = json.loads(requests_post.call_args[1]['data'])
             self.assertEqual(expected_params, data["params"])
@@ -444,7 +444,7 @@ class TestAirbrakeNotifier(unittest.TestCase):
         self.assertEqual(ErrorLevels.CRITICAL,
                          notice.payload['context']['severity'])
 
-        with mock.patch('requests.post') as requests_post:
+        with mock.patch('requests.Session.post') as requests_post:
             ab.notify(notice)
             data = json.loads(requests_post.call_args[1]['data'])
             error_level = data['context']['severity']
@@ -469,7 +469,7 @@ class TestAirbrakeNotifier(unittest.TestCase):
 
         ab.excepthook = early_exit_syshook
 
-        with mock.patch('requests.post') as requests_post:
+        with mock.patch('requests.Session.post') as requests_post:
             try:
                 raise Exception("raise to sys level")
             except Exception:
@@ -483,6 +483,19 @@ class TestAirbrakeNotifier(unittest.TestCase):
             error_level = data['context']['severity']
             self.assertEqual(ErrorLevels.ERROR, error_level)
             self.assertTrue(self.preserved_syshook)
+
+    def test_default_verify(self):
+        ab = Airbrake(project_id=1234, api_key='fake')
+        self.assertTrue(ab._session.verify)
+
+    def test_arg_verify(self):
+        ab = Airbrake(project_id=1234, api_key='fake', verify="foo")
+        self.assertEqual("foo", ab._session.verify)
+
+    def test_env_verify(self):
+        with mock.patch.dict(os.environ, {'AIRBRAKE_CA_BUNDLE': 'bar'}):
+            ab = Airbrake(project_id=1234, api_key='fake')
+            self.assertEqual("bar", ab._session.verify)
 
 
 if __name__ == '__main__':

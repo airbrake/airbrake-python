@@ -145,8 +145,11 @@ class Airbrake(object):
 
         self._exc_queue = utils.CheckableQueue()
 
-        self._ca_bundle = config.get("verify", os.getenv("AIRBRAKE_CA_BUNDLE"))
-
+        self._session = requests.Session()
+        if "verify" in config:
+            self._session.verify = config["verify"]
+        elif "AIRBRAKE_CA_BUNDLE" in os.environ:
+            self._session.verify = os.environ["AIRBRAKE_CA_BUNDLE"]
 
     def __repr__(self):
         """Return value for the repr function."""
@@ -353,14 +356,13 @@ class Airbrake(object):
 
         headers = {'Content-Type': 'application/json'}
         api_key = {'key': self.api_key}
-        response = requests.post(
+        response = self._session.post(
             self.api_url,
             data=json.dumps(payload, cls=utils.FailProofJSONEncoder,
                             sort_keys=True),
             headers=headers,
             params=api_key,
-            timeout=self.timeout,
-            verify=self._ca_bundle)
+            timeout=self.timeout)
         response.raise_for_status()
         return response
 
@@ -382,14 +384,13 @@ class Airbrake(object):
         headers = {'Content-Type': 'application/json'}
         api_key = {'key': self.api_key}
 
-        response = requests.post(self.deploy_url,
+        response = self._session.post(self.deploy_url,
                                  data=json.dumps(
                                      payload,
                                      cls=utils.FailProofJSONEncoder,
                                      sort_keys=True),
                                  headers=headers,
                                  params=api_key,
-                                 timeout=self.timeout,
-                                 verify=self._ca_bundle)
+                                 timeout=self.timeout)
         response.raise_for_status()
         return response
