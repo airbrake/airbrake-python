@@ -385,12 +385,12 @@ class Airbrake(object):
         api_key = {'key': self.api_key}
 
         response = self._session.post(self.deploy_url,
-                                 data=json.dumps(
-                                     payload,
-                                     cls=utils.FailProofJSONEncoder,
-                                     sort_keys=True),
-                                 headers=headers,
-                                 params=api_key,
-                                 timeout=self.timeout)
+                                      data=json.dumps(
+                                          payload,
+                                          cls=utils.FailProofJSONEncoder,
+                                          sort_keys=True),
+                                      headers=headers,
+                                      params=api_key,
+                                      timeout=self.timeout)
         response.raise_for_status()
         return response
