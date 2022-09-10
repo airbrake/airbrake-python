@@ -100,7 +100,7 @@ def airbrake_error_from_logrecord(record):
     for key, val in list(vars(record).items()):
         if not hasattr(_FAKE_LOGRECORD, key):
             # handle attribute/field name collisions:
-            # logrecod attrs should not limit or take
+            # logrecord attrs should not limit or take
             # precedence over values specified in 'extra'
             if key in params:
                 # if key "already" in params -> is logrecord attr

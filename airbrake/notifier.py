@@ -210,7 +210,7 @@ class Airbrake(object):
         :param params:      Payload field "params" which may contain any other
                             context related to the exception(s).
 
-        Exception info willl be read from sys.exc_info() if it is not
+        Exception info will be read from sys.exc_info() if it is not
         supplied. To prevent this behavior, pass exc_info=False.
         """
         if not utils.is_exc_info_tuple(exc_info):

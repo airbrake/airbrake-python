@@ -50,7 +50,7 @@ except Exception:
     logger.exception("Bad math.")
 ```
 
-By default, airbrake will catch and send uncaught exceptions. To avoid this behvaiour, use the send_uncaught_exc option:
+By default, airbrake will catch and send uncaught exceptions. To avoid this behaviour, use the send_uncaught_exc option:
 `logger = airbrake.getLogger(api_key=*****, project_id=12345, send_uncaught_exc=False)`
 
 ### setup for Airbrake On-Premise and other compatible back-ends (e.g. Errbit)
